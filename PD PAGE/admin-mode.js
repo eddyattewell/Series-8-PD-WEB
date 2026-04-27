@@ -4,7 +4,7 @@
     const STORAGE_KEY = 'pd_admin_mode';
     const REQUIRED_ROLE = 'Gold Command';
     const AUTH_ME_ENDPOINT = '/api/auth/me';
-    const DISCORD_LOGIN_URL = '/auth/discord/login';
+    const DISCORD_LOGIN_URL = '/api/auth/discord/login';
 
     let canUseEditMode = false;
 
