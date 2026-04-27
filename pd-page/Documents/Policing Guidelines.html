@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policing Guidelines - Series 8 Police Department</title>
+    <style>
+        body {
+            background: #111;
+            color: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .logo {
+            display: block;
+            margin: 40px auto 10px auto;
+            width: 180px;
+            height: auto;
+        }
+        .page-desc {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+        nav {
+            background: #181818;
+            padding: 0 0 0 20px;
+            box-shadow: 0 2px 8px #0004;
+        }
+        .navbar {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            height: 48px;
+            justify-content: center;
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropbtn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 14px 10px;
+            transition: color 0.2s;
+        }
+        .dropbtn:hover, .dropbtn:focus {
+            color: #e53935;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: #222;
+            min-width: 220px;
+            box-shadow: 0 8px 16px #0006;
+            z-index: 1;
+        }
+        .dropdown-content a {
+            color: #fff;
+            padding: 10px 18px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.98rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .dropdown-content a:hover {
+            background: #e53935;
+            color: #fff;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        @media (max-width: 700px) {
+            .navbar { flex-direction: column; align-items: flex-start; }
+            .dropdown-content { position: static; min-width: 100%; }
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #181818;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0006;
+            padding: 32px 28px;
+        }
+        a {
+            color: #e53935;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        h2 {margin-top: 28px;}
+        h3 {margin-top: 18px;}
+        ul {line-height: 1.6;}
+        .muted {color: #ccc;}
+        .callout {background: #141414; border: 1px solid #222; border-radius: 10px; padding: 14px 16px; margin: 16px 0;}
+        .section-sep {height: 1px; background: #222; border: 0; margin: 22px 0;}
+    </style>
+</head>
+<body>
+    <img src="../image.png" alt="Series 8 PD Logo" class="logo">
+    <div class="page-desc">Guidelines for proper policing conduct and procedures.</div>
+    <nav>
+        <div class="navbar" style="justify-content: center;">
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.location.href='../index.html'">Home</button>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Divisions ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Divisions/Trainee Police Constable.html">Trainee Police Constable</a>
+                    <a href="../Divisions/Response Unit.html">Response Unit</a>
+                    <a href="../Divisions/Roads Policing Unit.html">Roads Policing Unit</a>
+                    <a href="../Divisions/Armed Response Unit.html">Armed Response Unit</a>
+                    <a href="../Divisions/Criminal Investigation Dept.html">Criminal Investigation Dept.</a>
+                    <a href="../Divisions/Uniforms & Vehicles.html">Uniforms & Vehicles</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Documents ▼</button>
+                <div class="dropdown-content">
+                    <a href="rules.html">Rules</a>
+                    <a href="Keybinds-wheeluse.html">Keybinds/wheel use</a>
+                    <a href="Police Handbook.html">Police Handbook</a>
+                    <a href="MDT Guide.html">MDT Guide</a>
+                    <a href="Search Powers.html">Search Powers</a>
+                    <a href="Hunting License Process.html">Hunting License Process</a>
+                    <a href="Policing Guidelines.html">Policing Guidelines</a>
+                    <a href="Cheat Sheet.html">Cheat Sheet</a>
+                    <a href="Equipment List.html">Equipment List</a>
+                    <a href="Disciplinary System.html">Disciplinary System</a>
+                    <a href="Police Legislation Book.html">Police Legislation Book</a>
+                    <a href="Police Arrest-Custody Process.html">Police Arrest/Custody Process</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Forms ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Forms/Warning-Strike Form.html">Warning/Strike Form (Admin Only)</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.open('https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d', '_blank')">Roster</button>
+                <button class="dropbtn" onclick="toggleAdminMode()" id="adminModeBtn">Edit Mode</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Policing Guidelines</h1>
+
+        <h2 id="standards">Key Standards &amp; Expectations</h2>
+
+        <h3>Abuse of Taser and Firearms</h3>
+        <p>Any form of gun abuse with your firearm or taser is strictly prohibited. If you are caught abusing your taser or firearm it will be removed immediately and you will face further consequences, including potential removal from the police force.</p>
+
+        <h3>Corruption</h3>
+        <p>Zero tolerance. Anyone found committing acts against guidelines will be swiftly removed and blacklisted. Using Police Universal Keys on or off duty to access any property/compound without a warrant signed by a judge is instant dismissal.</p>
+
+        <h3>Professionalism</h3>
+        <p>Maintain a high level of professionalism at all times while on duty. Failure to comply can result in warnings, demotion, or removal.</p>
+
+        <h3>Traffic Stops</h3>
+        <p>Maximum of <strong>2 police units</strong> at each traffic stop unless additional units are requested by an officer due to escalation.</p>
+
+        <h3>Personal Vehicles</h3>
+        <p>No driving personal vehicles while on duty unless authorised by Silver/Gold Command. Personal vehicles are for off duty only (unless authorised for a situation).</p>
+
+        <h3>Respect</h3>
+        <p>Respect higher-ups, other officers and members of the public. If you have an issue with an instruction, discuss it later or take it up with a higher rank (not the same person in the moment).</p>
+
+        <h3>Confiscated Items</h3>
+        <p>Prior to searching a suspect, any confiscated items must go straight into the evidence locker associated with the MDT number. Keeping confiscated items or failing to store them correctly can result in removal from the force.</p>
+
+        <h3>Robberies</h3>
+        <p>At robberies, TPCs or unarmed officers must block roads and surrounding areas to protect the public. An unarmed officer should only approach a door if directed by a higher-up for hostage collection.</p>
+
+        <h3>Police Communications</h3>
+        <p>Keep police communications clear. Remain in character, remain professional, and use correct state codes and call signs.</p>
+
+        <h3>Drug Raids</h3>
+        <p>Organised drug raids can only happen if Gold Command authorises it, for good reason, and with sufficient evidence. Going to a drug ping location is not a raid.</p>
+
+        <h3>Driving Standards</h3>
+        <p>Follow all traffic laws while on patrol (stop at red lights, no speeding). Do not enforce rules you are not following yourself.</p>
+
+        <h3>Searching Bodies</h3>
+        <p>Officers may search stage 1 bodies to confiscate illegal items (drugs, weapons) and to find identification to identify the person.</p>
+    </div>
+
+    <script src="../admin-mode.js"></script>
+</body>
+</html>

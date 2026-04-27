@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armed Response Unit - Series 8 Police Department</title>
+    <style>
+        body {
+            background: #111;
+            color: #fff;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .logo {
+            display: block;
+            margin: 40px auto 10px auto;
+            width: 180px;
+            height: auto;
+        }
+        .page-desc {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+        nav {
+            background: #181818;
+            padding: 0 0 0 20px;
+            box-shadow: 0 2px 8px #0004;
+        }
+        .navbar {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            height: 48px;
+            justify-content: center;
+        }
+        .dropdown {
+            position: relative;
+        }
+        .dropbtn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 14px 10px;
+            transition: color 0.2s;
+        }
+        .dropbtn:hover, .dropbtn:focus {
+            color: #e53935;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: #222;
+            min-width: 220px;
+            box-shadow: 0 8px 16px #0006;
+            z-index: 1;
+        }
+        .dropdown-content a {
+            color: #fff;
+            padding: 10px 18px;
+            text-decoration: none;
+            display: block;
+            font-size: 0.98rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .dropdown-content a:hover {
+            background: #e53935;
+            color: #fff;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        @media (max-width: 700px) {
+            .navbar { flex-direction: column; align-items: flex-start; }
+            .dropdown-content { position: static; min-width: 100%; }
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: #181818;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0006;
+            padding: 32px 28px;
+        }
+        a {
+            color: #e53935;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        h2 {margin-top: 28px;}
+        h3 {margin-top: 18px;}
+        ul, ol {line-height: 1.6;}
+        .muted {color: #ccc;}
+        .callout {background: #141414; border: 1px solid #222; border-radius: 10px; padding: 14px 16px; margin: 16px 0;}
+        .section-sep {height: 1px; background: #222; border: 0; margin: 22px 0;}
+    </style>
+</head>
+<body>
+    <img src="../image.png" alt="Series 8 PD Logo" class="logo">
+    <div class="page-desc">Specialist armed officers trained to respond to high-risk incidents and protect the community.</div>
+    <nav>
+        <div class="navbar" style="justify-content: center;">
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.location.href='../index.html'">Home</button>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Divisions ▼</button>
+                <div class="dropdown-content">
+                    <a href="Trainee Police Constable.html">Trainee Police Constable</a>
+                    <a href="Response Unit.html">Response Unit</a>
+                    <a href="Roads Policing Unit.html">Roads Policing Unit</a>
+                    <a href="Armed Response Unit.html">Armed Response Unit</a>
+                    <a href="Criminal Investigation Dept.html">Criminal Investigation Dept.</a>
+                    <a href="Uniforms & Vehicles.html">Uniforms & Vehicles</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Documents ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Documents/rules.html">Rules</a>
+                    <a href="../Documents/Keybinds-wheeluse.html">Keybinds/wheel use</a>
+                    <a href="../Documents/Police Handbook.html">Police Handbook</a>
+                    <a href="../Documents/MDT Guide.html">MDT Guide</a>
+                    <a href="../Documents/Search Powers.html">Search Powers</a>
+                    <a href="../Documents/Hunting License Process.html">Hunting License Process</a>
+                    <a href="../Documents/Policing Guidelines.html">Policing Guidelines</a>
+                    <a href="../Documents/Cheat Sheet.html">Cheat Sheet</a>
+                    <a href="../Documents/Equipment List.html">Equipment List</a>
+                    <a href="../Documents/Disciplinary System.html">Disciplinary System</a>
+                    <a href="../Documents/Police Legislation Book.html">Police Legislation Book</a>
+                    <a href="../Documents/Police Arrest-Custody Process.html">Police Arrest/Custody Process</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Forms ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Forms/Warning-Strike Form.html">Warning/Strike Form (Admin Only)</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.open('https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d', '_blank')">Roster</button>
+                <button class="dropbtn" onclick="toggleAdminMode()" id="adminModeBtn">Edit Mode</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Armed Response Unit</h1>
+
+        <h2 id="who">Who are we?</h2>
+        <p>The Armed Response Unit (ARU) is a unit within the Series 8 Police Department who is widely regarded as one of the most skilled and well-equipped police firearms units in the world, and has been involved in a number of high-profile operations.</p>
+
+        <hr class="section-sep">
+
+        <h2 id="for-you">Is this for you?</h2>
+        <p>ARU officers often operate in high-stress, rapidly changing situations where making the right decision quickly can mean the difference between life and death. The ability to make sound decisions under pressure is essential.</p>
+        <p>Clear, concise communication is critical to ensure a coordinated response to high-risk situations. ARU officers are held to a high standard of professionalism and discipline, and are accountable for all of their actions.</p>
+
+        <div class="callout">
+            <p style="margin: 0;"><strong>Expectation:</strong> If you cannot remain calm, professional, and communicative under pressure, ARU is not for you.</p>
+        </div>
+
+        <hr class="section-sep">
+
+        <h2 id="responsibilities">Our Responsibilities</h2>
+        <ul>
+            <li>Respond to high-risk situations and provide armed support to other police units as required.</li>
+            <li>Participate in training exercises and drills to maintain readiness for potential threats.</li>
+            <li>Comply with all relevant policies, procedures, and legislation governing firearms and tactical operations.</li>
+            <li>Maintain a high standard of professionalism, discipline, and accountability at all times.</li>
+            <li>Work closely with CID to bring down OCGs.</li>
+        </ul>
+
+        <hr class="section-sep">
+
+        <h2 id="transfers">Transferring Units</h2>
+        <ul>
+            <li>Response to RPU: 7 days</li>
+            <li>Response to ARU: 14 days</li>
+            <li>Response to CID: head hunted</li>
+        </ul>
+
+        <hr class="section-sep">
+
+        <h2 id="links">Related Pages</h2>
+        <ul>
+            <li><a href="Response Unit.html">Response Unit</a></li>
+            <li><a href="Roads Policing Unit.html">Roads Policing Unit (RPU)</a></li>
+            <li><a href="Criminal Investigation Dept.html">Criminal Investigation Department (CID)</a></li>
+            <li><a href="../Documents/Police Legislation Book.html">Police Legislation Book</a></li>
+        </ul>
+    </div>
+
+    <script src="../admin-mode.js"></script>
+</body>
+</html>
