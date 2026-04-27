@@ -44,15 +44,21 @@ module.exports = async function handler(req, res) {
         return;
     }
 
-    const roles = Array.isArray(payload.roles) ? payload.roles : [];
+    const roleNames = Array.isArray(payload.roles) ? payload.roles : [];
+    const roleIds = Array.isArray(payload.roleIds) ? payload.roleIds : [];
+
+    // Combine names and ids so clients can check either form.
+    const combined = Array.from(new Set([].concat(roleNames, roleIds.map(String))));
 
     res.status(200).json({
         authenticated: true,
-        roles,
+        roles: combined,
+        roleIds: roleIds,
         user: {
             id: payload.sub,
             username: payload.username,
-            roles
+            roles: roleNames,
+            roleIds: roleIds
         }
     });
 };

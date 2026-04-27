@@ -3,6 +3,7 @@
 
     const STORAGE_KEY = 'pd_admin_mode';
     const REQUIRED_ROLE = 'Gold Command';
+    const REQUIRED_ROLE_ID = '1474763372401529068';
     const AUTH_ME_ENDPOINT = '/api/auth/me';
     const DISCORD_LOGIN_URL = '/api/auth/discord/login';
 
@@ -14,8 +15,15 @@
 
     function hasRequiredRole(roles) {
         const required = normalizeRole(REQUIRED_ROLE);
-        return Array.isArray(roles) && roles.some(function (role) {
-            return normalizeRole(role) === required;
+        const requiredId = String(REQUIRED_ROLE_ID).trim();
+        if (!Array.isArray(roles)) return false;
+
+        return roles.some(function (role) {
+            if (!role && role !== 0) return false;
+            const asStr = String(role).trim();
+            if (!asStr) return false;
+            if (asStr === requiredId) return true;
+            return normalizeRole(asStr) === required;
         });
     }
 

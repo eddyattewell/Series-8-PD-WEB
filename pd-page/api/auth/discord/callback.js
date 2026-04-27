@@ -27,17 +27,18 @@ async function parseJsonResponse(response) {
     }
 }
 
-async function getDiscordMemberRoleNames(userId) {
+async function getDiscordMemberRoles(userId) {
     const guildId = process.env.DISCORD_GUILD_ID;
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!guildId || !botToken) {
-        return [];
+        return { names: [], ids: [] };
     }
 
     const headers = {
         Authorization: 'Bot ' + botToken
     };
+
 
     const [memberRes, rolesRes] = await Promise.all([
         fetch(DISCORD_API_BASE + '/guilds/' + guildId + '/members/' + userId, {
@@ -51,14 +52,34 @@ async function getDiscordMemberRoleNames(userId) {
     ]);
 
     if (!memberRes.ok || !rolesRes.ok) {
-        return [];
+        try {
+            const memberBody = await parseJsonResponse(memberRes).catch(() => ({ raw: 'unreadable' }));
+            const rolesBody = await parseJsonResponse(rolesRes).catch(() => ({ raw: 'unreadable' }));
+            console.error('Discord API role fetch failed', {
+                guildId,
+                userId,
+                memberStatus: memberRes.status,
+                memberBody,
+                rolesStatus: rolesRes.status,
+                rolesBody
+            });
+        } catch (err) {
+            console.error('Discord API role fetch failed and logging failed', err);
+        }
+
+        return { names: [], ids: [] };
     }
 
     const member = await parseJsonResponse(memberRes);
     const roles = await parseJsonResponse(rolesRes);
 
     if (!Array.isArray(member.roles) || !Array.isArray(roles)) {
-        return [];
+        console.error('Discord API returned unexpected shapes', { guildId, userId, member, roles });
+        return { names: [], ids: [] };
+    }
+
+    if (!Array.isArray(member.roles) || !Array.isArray(roles)) {
+        return { names: [], ids: [] };
     }
 
     const nameById = new Map();
@@ -67,7 +88,10 @@ async function getDiscordMemberRoleNames(userId) {
         nameById.set(role.id, role.name);
     });
 
-    return member.roles.map((id) => nameById.get(id)).filter(Boolean);
+    const names = member.roles.map((id) => nameById.get(id)).filter(Boolean);
+    const ids = member.roles.map((id) => String(id)).filter(Boolean);
+
+    return { names, ids };
 }
 
 module.exports = async function handler(req, res) {
@@ -157,7 +181,7 @@ module.exports = async function handler(req, res) {
     }
 
     const user = await parseJsonResponse(userResponse);
-    const roleNames = await getDiscordMemberRoleNames(user.id);
+    const { names: roleNames, ids: roleIds } = await getDiscordMemberRoles(user.id);
 
     const payload = {
         sub: user.id,
@@ -166,6 +190,7 @@ module.exports = async function handler(req, res) {
                 ? user.username + '#' + user.discriminator
                 : user.username,
         roles: roleNames,
+        roleIds: roleIds,
         iat: Date.now()
     };
 
