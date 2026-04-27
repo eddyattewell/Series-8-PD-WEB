@@ -90,17 +90,26 @@ module.exports = async function handler(req, res) {
         return;
     }
 
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-    const sessionSecret = process.env.SESSION_SECRET;
+    const requiredEnv = [
+        'DISCORD_CLIENT_ID',
+        'DISCORD_CLIENT_SECRET',
+        'SESSION_SECRET'
+    ];
+    const missingEnv = requiredEnv.filter((name) => !process.env[name]);
 
-    if (!clientId || !clientSecret || !sessionSecret) {
+    if (missingEnv.length > 0) {
         res.status(500).json({
-            error:
-                'Missing required env vars: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, SESSION_SECRET'
+            error: 'Missing required environment variables',
+            missing: missingEnv,
+            where: 'Vercel Project Settings -> Environment Variables',
+            action: 'Add variables and redeploy'
         });
         return;
     }
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    const sessionSecret = process.env.SESSION_SECRET;
 
     const cookies = parseCookies(req.headers.cookie || '');
     if (!cookies[STATE_COOKIE] || cookies[STATE_COOKIE] !== state) {

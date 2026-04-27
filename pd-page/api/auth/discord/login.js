@@ -13,13 +13,24 @@ module.exports = async function handler(req, res) {
         return;
     }
 
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    if (!clientId) {
+    const requiredEnv = [
+        'DISCORD_CLIENT_ID',
+        'DISCORD_CLIENT_SECRET',
+        'SESSION_SECRET'
+    ];
+    const missingEnv = requiredEnv.filter((name) => !process.env[name]);
+
+    if (missingEnv.length > 0) {
         res.status(500).json({
-            error: 'Missing DISCORD_CLIENT_ID environment variable'
+            error: 'Missing required environment variables',
+            missing: missingEnv,
+            where: 'Vercel Project Settings -> Environment Variables',
+            action: 'Add variables and redeploy'
         });
         return;
     }
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
 
     const state = crypto.randomBytes(24).toString('hex');
     const redirectUri =

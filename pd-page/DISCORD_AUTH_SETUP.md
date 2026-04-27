@@ -47,3 +47,22 @@ If backend auth is not configured yet, temporary role mock is available in brows
 - value example: Gold Command
 
 Clear after testing.
+
+## Troubleshooting
+
+If you see this error:
+
+- {"error":"Missing DISCORD_CLIENT_ID environment variable"}
+
+or:
+
+- {"error":"Missing required environment variables", ...}
+
+do the following:
+
+1. Open Vercel -> Project Settings -> Environment Variables.
+2. Add all required vars listed above for Production (and Preview if needed).
+3. Redeploy the project (env var changes are only picked up on a new deployment).
+4. Retest:
+  - /api/auth/discord/login
+  - /auth/discord/login
