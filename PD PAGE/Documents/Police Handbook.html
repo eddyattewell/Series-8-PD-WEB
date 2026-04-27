@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Police Handbook - Series 8 Police Department</title>
+        <style>
+            body {
+                background: #111;
+                color: #fff;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+            }
+            .logo {
+                display: block;
+                margin: 40px auto 10px auto;
+                width: 180px;
+                height: auto;
+            }
+            .page-desc {
+                text-align: center;
+                margin-bottom: 24px;
+                font-size: 1.1rem;
+                color: #ccc;
+            }
+            nav {
+                background: #181818;
+                padding: 0 0 0 20px;
+                box-shadow: 0 2px 8px #0004;
+            }
+            .navbar {
+                display: flex;
+                align-items: center;
+                gap: 30px;
+                height: 48px;
+                justify-content: center;
+            }
+            .dropdown {
+                position: relative;
+            }
+            .dropbtn {
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 1rem;
+                cursor: pointer;
+                padding: 14px 10px;
+                transition: color 0.2s;
+            }
+            .dropbtn:hover, .dropbtn:focus {
+                color: #e53935;
+            }
+            .dropdown-content {
+                display: none;
+                position: absolute;
+                background: #222;
+                min-width: 220px;
+                box-shadow: 0 8px 16px #0006;
+                z-index: 1;
+            }
+            .dropdown-content a {
+                color: #fff;
+                padding: 10px 18px;
+                text-decoration: none;
+                display: block;
+                font-size: 0.98rem;
+                transition: background 0.2s, color 0.2s;
+            }
+            .dropdown-content a:hover {
+                background: #e53935;
+                color: #fff;
+            }
+            .dropdown:hover .dropdown-content {
+                display: block;
+            }
+            @media (max-width: 700px) {
+                .navbar { flex-direction: column; align-items: flex-start; }
+                .dropdown-content { position: static; min-width: 100%; }
+            }
+            .container {
+                max-width: 800px;
+                margin: 40px auto;
+                background: #181818;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px #0006;
+                padding: 32px 28px;
+            }
+            a {
+                color: #e53935;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <img src="../image.png" alt="Series 8 PD Logo" class="logo">
+        <div class="page-desc" style="text-align:center;margin-bottom:24px;font-size:1.1rem;color:#ccc;">This handbook contains essential information for all officers.</div>
+        <nav>
+            <div class="navbar" style="justify-content: center;">
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="window.location.href='../Home/index.html'">Home</button>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">Divisions ▼</button>
+                    <div class="dropdown-content">
+                        <a href="../Divisions/Trainee Police Constable.html">Trainee Police Constable</a>
+                        <a href="../Divisions/Response Unit.html">Response Unit</a>
+                        <a href="../Divisions/Roads Policing Unit.html">Roads Policing Unit</a>
+                        <a href="../Divisions/Armed Response Unit.html">Armed Response Unit</a>
+                        <a href="../Divisions/Criminal Investigation Dept.html">Criminal Investigation Dept.</a>
+                        <a href="../Divisions/Uniforms & Vehicles.html">Uniforms & Vehicles</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">Documents ▼</button>
+                    <div class="dropdown-content">
+                        <a href="rules.html">Rules</a>
+                        <a href="Keybinds-wheeluse.html">Keybinds/wheel use</a>
+                        <a href="Police Handbook.html">Police Handbook</a>
+                        <a href="MDT Guide.html">MDT Guide</a>
+                        <a href="Search Powers.html">Search Powers</a>
+                        <a href="Hunting License Process.html">Hunting License Process</a>
+                        <a href="Policing Guidelines.html">Policing Guidelines</a>
+                        <a href="Cheat Sheet.html">Cheat Sheet</a>
+                        <a href="Equipment List.html">Equipment List</a>
+                        <a href="Disciplinary System.html">Disciplinary System</a>
+                        <a href="Police Legislation Book.html">Police Legislation Book</a>
+                        <a href="Police Arrest-Custody Process.html">Police Arrest/Custody Process</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">Forms ▼</button>
+                    <div class="dropdown-content">
+                        <a href="../Forms/Warning-Strike Form.html">Warning/Strike Form (Admin Only)</a>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="window.open('https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d', '_blank')">Roster</button>
+                    <button class="dropbtn" onclick="toggleAdminMode()" id="adminModeBtn">Admin Mode</button>
+                </div>
+            </div>
+        </nav>
+        <div class="container">
+            <h1>Police Handbook</h1>
+            <ul>
+                <li>Code of Conduct</li>
+                <li>Radio Procedures</li>
+                <li>Vehicle Operations</li>
+                <li>Arrest Protocols</li>
+                <li>Use of Force</li>
+            </ul>
+        </div>
+
+        <script src="../admin-mode.js"></script>
+    </body>

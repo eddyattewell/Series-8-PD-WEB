@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roads Policing Unit - Series 8 Police Department</title>
+    <style>
+        body {background: #111; color: #fff; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0;}
+        .logo {display: block; margin: 40px auto 10px auto; width: 180px; height: auto;}
+        .page-desc {text-align: center; margin-bottom: 24px; font-size: 1.1rem; color: #ccc;}
+        nav {background: #181818; padding: 0 0 0 20px; box-shadow: 0 2px 8px #0004;}
+        .navbar {display: flex; align-items: center; gap: 30px; height: 48px; justify-content: center;}
+        .dropdown {position: relative;}
+        .dropbtn {background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: 14px 10px; transition: color 0.2s;}
+        .dropbtn:hover, .dropbtn:focus {color: #e53935;}
+        .dropdown-content {display: none; position: absolute; background: #222; min-width: 220px; box-shadow: 0 8px 16px #0006; z-index: 1;}
+        .dropdown-content a {color: #fff; padding: 10px 18px; text-decoration: none; display: block; font-size: 0.98rem; transition: background 0.2s, color 0.2s;}
+        .dropdown-content a:hover {background: #e53935; color: #fff;}
+        .dropdown:hover .dropdown-content {display: block;}
+        @media (max-width: 700px) {.navbar { flex-direction: column; align-items: flex-start; } .dropdown-content { position: static; min-width: 100%; }}
+        .container {max-width: 800px; margin: 40px auto; background: #181818; border-radius: 10px; box-shadow: 0 2px 8px #0006; padding: 32px 28px;}
+        a {color: #e53935; text-decoration: none;}
+        a:hover {text-decoration: underline;}
+        h2 {margin-top: 28px;}
+        h3 {margin-top: 18px;}
+        ul, ol {line-height: 1.6;}
+        .muted {color: #ccc;}
+        .callout {background: #141414; border: 1px solid #222; border-radius: 10px; padding: 14px 16px; margin: 16px 0;}
+        .section-sep {height: 1px; background: #222; border: 0; margin: 22px 0;}
+    </style>
+</head>
+<body>
+    <img src="../image.png" alt="Series 8 PD Logo" class="logo">
+    <div class="page-desc">Specialists in traffic enforcement, accident response, and road safety.</div>
+    <nav>
+        <div class="navbar" style="justify-content: center;">
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.location.href='../Home/index.html'">Home</button>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Divisions ▼</button>
+                <div class="dropdown-content">
+                    <a href="Trainee Police Constable.html">Trainee Police Constable</a>
+                    <a href="Response Unit.html">Response Unit</a>
+                    <a href="Roads Policing Unit.html">Roads Policing Unit</a>
+                    <a href="Armed Response Unit.html">Armed Response Unit</a>
+                    <a href="Criminal Investigation Dept.html">Criminal Investigation Dept.</a>
+                    <a href="Uniforms & Vehicles.html">Uniforms & Vehicles</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Documents ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Documents/rules.html">Rules</a>
+                    <a href="../Documents/Keybinds-wheeluse.html">Keybinds/wheel use</a>
+                    <a href="../Documents/Police Handbook.html">Police Handbook</a>
+                    <a href="../Documents/MDT Guide.html">MDT Guide</a>
+                    <a href="../Documents/Search Powers.html">Search Powers</a>
+                    <a href="../Documents/Hunting License Process.html">Hunting License Process</a>
+                    <a href="../Documents/Policing Guidelines.html">Policing Guidelines</a>
+                    <a href="../Documents/Cheat Sheet.html">Cheat Sheet</a>
+                    <a href="../Documents/Equipment List.html">Equipment List</a>
+                    <a href="../Documents/Disciplinary System.html">Disciplinary System</a>
+                    <a href="../Documents/Police Legislation Book.html">Police Legislation Book</a>
+                    <a href="../Documents/Police Arrest-Custody Process.html">Police Arrest/Custody Process</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn">Forms ▼</button>
+                <div class="dropdown-content">
+                    <a href="../Forms/Warning-Strike Form.html">Warning/Strike Form (Admin Only)</a>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropbtn" onclick="window.open('https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d', '_blank')">Roster</button>
+                <button class="dropbtn" onclick="toggleAdminMode()" id="adminModeBtn">Admin Mode</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Roads Policing Unit</h1>
+
+        <h2 id="responsibilities">Responsibilities</h2>
+        <p>A Roads Policing Unit (RPU) is the specialist road traffic police unit. RPU is a group of specially trained officers with access to fast vehicles and equipment designed for pursuit. Using this training and equipment, RPU can pursue and detain suspects at high speed and, when needed, bring a vehicle to a stop quickly and safely.</p>
+        <p>Their rigorous training makes them some of the best drivers in the force and their presence should make criminals think twice about trying to get away in vehicles.</p>
+
+        <hr class="section-sep">
+
+        <h2 id="role">Role</h2>
+        <ul>
+            <li>Deal with roadside situations such as routine vehicle stops.</li>
+            <li>Stop offenders using tactics such as tactical roadblocks, TPAC and stingers.</li>
+            <li>Assist other units by transporting suspects to custody from scenes and helping with processing suspects through custody.</li>
+            <li>Write up incident reports quickly and professionally.</li>
+            <li>Support convoys with ARU to ensure maximum efficiency.</li>
+            <li>Work in joint response with NHS when dealing with roadside injuries/deaths and road traffic collisions: secure scenes, manage traffic, announce road closures, and more.</li>
+        </ul>
+
+        <h3>ANPR</h3>
+        <p>RPU has access to Automatic Number Plate Recognition (ANPR). Cameras capture number plates and check them against databases. If a match is found for a vehicle of police interest, the ANPR operator receives an alarm and can stop the vehicle.</p>
+
+        <div class="callout">
+            <p style="margin: 0;"><strong>Joint Response rule:</strong> If (and only if) NHS have very low numbers and cannot attend a 999 RTC or an injured suspect/victim, then transportation of victims/suspects to NHS will be allowed.</p>
+        </div>
+
+        <hr class="section-sep">
+
+        <h2 id="training">Training</h2>
+        <ul>
+            <li>When learning how to pursue a vehicle, you will undergo training to form a box to bring a vehicle to a stop, and learn how to request tactical contact.</li>
+            <li>You will learn minimum required safe distance from a vehicle so you don’t put yourself or others in danger.</li>
+            <li>Driver level training is organised after acceptance into RPU by the head of unit.</li>
+            <li>Biker training is scheduled by the head of unit or deputy at a later date.</li>
+            <li>RPU will patrol motorways and major lanes of traffic; you will be shown best patrol areas.</li>
+            <li>You are authorised to patrol motorways within city limits to assist the Series 8 Police Department.</li>
+        </ul>
+
+        <hr class="section-sep">
+
+        <h2 id="tpac">Tactical Pursuit and Containment (TPAC)</h2>
+
+        <h3>Tactical Contact</h3>
+        <p>Similar to the American PIT manoeuvre. A police vehicle contacts a suspect’s vehicle (usually from the rear) to bring the car to a stop. Variables include: speed, public presence, road width, and the suspect vehicle’s centre of gravity. This is particularly useful when the suspect is known to be armed as it places officers behind and therefore harder to be shot.</p>
+
+        <h3>Box</h3>
+        <p>With three/four police vehicles, officers create a “box” around a fleeing vehicle and slowly bring their cars to a stop in unison, forcing the suspect vehicle to slow and stop.</p>
+
+        <h3>Rolling Road Block</h3>
+        <p>Preferred method on motorways or separate carriageways. Several police vehicles block an entire carriageway at a set speed; approaching vehicles must match the speed and cannot pass. The suspect vehicle is then brought to a stop once more officers join from behind.</p>
+
+        <h3>Spike Strips</h3>
+        <p>A specialist tool used to puncture and deflate tyres. Must be used extremely carefully as it can cause damage to public and police vehicles if done incorrectly.</p>
+
+        <hr class="section-sep">
+
+        <h2 id="situations">Situations / Scene Command</h2>
+        <p>The highest available command on scene is in charge of situations. For example, at a Vangelico store robbery, the highest available rank coordinates RPU to block escape routes, prepare for a chase, and maintain public safety.</p>
+        <p>If no command is available on scene, the lead RPU officer of the highest rank will take command. The head of unit will train lead traffic officers to ensure they are capable of coordinating scenes.</p>
+
+        <hr class="section-sep">
+
+        <h2 id="transfers">Transferring Units</h2>
+        <ul>
+            <li>Response to RPU: 7 days</li>
+            <li>Response to ARU: 14 days</li>
+            <li>Response to CID: head hunted</li>
+        </ul>
+
+        <p>Set an example to new and fellow officers on the force: follow proper radio protocol, keep your head cool and be an overall good officer. RPU members are held to a substantially higher standard than any other unit in the Series 8 Police Department.</p>
+
+        <hr class="section-sep">
+
+        <h2 id="links">Related Pages</h2>
+        <ul>
+            <li><a href="Response Unit.html">Response Unit</a></li>
+            <li><a href="Armed Response Unit.html">Armed Response Unit (ARU)</a></li>
+            <li><a href="Criminal Investigation Dept.html">Criminal Investigation Department (CID)</a></li>
+            <li><a href="../Documents/Search Powers.html">Search Powers</a></li>
+            <li><a href="../Documents/MDT Guide.html">MDT Guide</a></li>
+        </ul>
+    </div>
+
+    <script src="../admin-mode.js"></script>
+</body>
+</html>
