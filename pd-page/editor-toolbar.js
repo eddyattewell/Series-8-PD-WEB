@@ -4,6 +4,14 @@
     const TOOLBAR_ID = 'pdEditorToolbar';
     const TOOLBAR_VISIBLE_KEY = 'pd_editor_toolbar_visible';
 
+    function getEditableElement() {
+        return document.getElementById('pdEditableContent') || document.body;
+    }
+
+    function isEditing() {
+        return getEditableElement().contentEditable === 'true';
+    }
+
     function createToolbar() {
         let toolbar = document.getElementById(TOOLBAR_ID);
         if (toolbar) return toolbar;
@@ -169,7 +177,7 @@
                     button.addEventListener('click', (e) => {
                         e.preventDefault();
                         document.execCommand(btn.cmd, false, null);
-                        document.body.focus();
+                        getEditableElement().focus();
                     });
                     groupDiv.appendChild(button);
                 }
@@ -185,8 +193,8 @@
     function showToolbar() {
         const toolbar = createToolbar();
         toolbar.style.display = 'flex';
-        enhanceImageEditing(); // Re-enhance images when entering edit mode
-        makeContentEditable(); // Ensure content is editable
+        enhanceImageEditing();
+        makeContentEditable();
         try {
             localStorage.setItem(TOOLBAR_VISIBLE_KEY, '1');
         } catch { }
@@ -206,66 +214,50 @@
         return document.getElementById(TOOLBAR_ID)?.style.display !== 'none';
     }
 
-    // Ensure content wrapper is properly set up for editing
     function makeContentEditable() {
-        const wrapper = document.getElementById('pdEditableContent');
-        if (!wrapper) return;
-
-        wrapper.contentEditable = 'true';
+        const wrapper = getEditableElement();
+        if (wrapper === document.body) return;
         wrapper.style.outline = '1px dashed #666';
         wrapper.style.minHeight = '400px';
-
-        // Allow clicking anywhere in the wrapper to position cursor
-        wrapper.addEventListener('click', (e) => {
-            if (e.target === wrapper) {
-                wrapper.focus();
-                const range = document.createRange();
-                range.setStart(wrapper, wrapper.childNodes.length);
-                range.collapse(true);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        });
     }
 
-    // Make images draggable and resizable in edit mode
     function enhanceImageEditing() {
         const images = document.querySelectorAll('img');
         images.forEach(img => {
             if (img.dataset.adminControl === '1') return;
-
             img.style.maxWidth = '100%';
             img.style.cursor = 'grab';
-            img.dataset.dragging = 'false';
+            img.style.userSelect = 'none';
 
-            // Make image selectable
             img.addEventListener('click', (e) => {
-                if (document.body.contentEditable !== 'true') return;
+                if (!isEditing()) return;
                 e.preventDefault();
                 e.stopPropagation();
-
-                // Select the image
                 const selection = window.getSelection();
                 const range = document.createRange();
                 range.selectNodeContents(img);
                 selection.removeAllRanges();
                 selection.addRange(range);
-
-                // Add visual indicator
                 img.style.outline = '2px solid #e53935';
                 img.style.outlineOffset = '2px';
             });
 
-            // Make draggable
+            img.addEventListener('mousedown', (e) => {
+                if (!isEditing()) return;
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
             img.draggable = true;
 
             img.addEventListener('dragstart', (e) => {
-                if (document.body.contentEditable !== 'true') return;
+                if (!isEditing()) return;
                 e.preventDefault();
+                e.stopPropagation();
                 img.dataset.dragging = 'true';
                 img.style.opacity = '0.5';
                 img.style.cursor = 'grabbing';
+                e.dataTransfer.effectAllowed = 'move';
             });
 
             img.addEventListener('dragend', (e) => {
@@ -275,70 +267,56 @@
             });
         });
 
-        // Global drag handlers for repositioning
         let draggedImg = null;
 
         document.addEventListener('dragstart', (e) => {
-            if (document.body.contentEditable !== 'true') return;
+            if (!isEditing()) return;
             if (e.target.tagName === 'IMG') {
                 draggedImg = e.target;
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', e.target.outerHTML);
+                if (window.getSelection) window.getSelection().removeAllRanges();
             }
         }, true);
 
         document.addEventListener('dragover', (e) => {
-            if (document.body.contentEditable !== 'true') return;
+            if (!isEditing()) return;
             e.preventDefault();
+            e.stopPropagation();
             e.dataTransfer.dropEffect = 'move';
         });
 
         document.addEventListener('drop', (e) => {
-            if (document.body.contentEditable !== 'true') return;
-            if (!draggedImg) return;
-
+            if (!isEditing() || !draggedImg) return;
             e.preventDefault();
             e.stopPropagation();
-
-            // Get the drop position
             const dropTarget = e.target;
-
-            // If dropping on the body or a non-image element, insert after
             if (dropTarget !== draggedImg && dropTarget.tagName !== 'IMG') {
-                if (dropTarget === document.body) {
-                    // Append to body
-                    document.body.appendChild(draggedImg);
+                if (dropTarget === getEditableElement() || !dropTarget.parentNode) {
+                    getEditableElement().appendChild(draggedImg);
                 } else {
-                    // Insert after the drop target
                     dropTarget.parentNode.insertBefore(draggedImg, dropTarget.nextSibling);
                 }
             }
-
             draggedImg = null;
         });
 
-        // Make body properly editable - handle clicks in empty areas
-        const wrapper = document.getElementById('pdEditableContent') || document.body;
-        wrapper.addEventListener('click', (e) => {
-            const isEditing = wrapper.contentEditable === 'true';
-            if (!isEditing) return;
+        document.addEventListener('selectstart', (e) => {
+            if (!isEditing()) return;
+            if (e.target.tagName === 'IMG') e.preventDefault();
+        });
 
-            // Click on image - already handled by img click handler
+        const editable = getEditableElement();
+        editable.addEventListener('click', (e) => {
+            if (!isEditing()) return;
             if (e.target.tagName === 'IMG') return;
-
-            // Click on edit controls - don't interfere
             if (e.target.getAttribute('data-admin-control') === '1') return;
-
-            // Remove image outlines when clicking elsewhere
             document.querySelectorAll('img').forEach(img => {
                 if (img !== e.target) img.style.outline = 'none';
             });
-
-            // If we're in edit mode, ensure focus and position cursor
-            wrapper.focus();
+            editable.focus();
             if (window.getSelection().rangeCount === 0) {
                 const range = document.createRange();
-                range.setStart(wrapper, wrapper.childNodes.length);
+                range.setStart(editable, editable.childNodes.length);
                 range.collapse(true);
                 const selection = window.getSelection();
                 selection.removeAllRanges();
@@ -346,33 +324,27 @@
             }
         });
 
-        // Allow deletion of selected images with Delete or Backspace
         document.addEventListener('keydown', (e) => {
-            if (document.body.contentEditable !== 'true') return;
+            if (!isEditing()) return;
             if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-
             const selection = window.getSelection();
             if (selection.rangeCount === 0) return;
-
             const range = selection.getRangeAt(0);
             const container = range.commonAncestorContainer;
             const img = container.nodeType === 3 ? container.parentElement : container;
-
-            if (img.tagName === 'IMG') {
+            if (img && img.tagName === 'IMG') {
                 e.preventDefault();
                 img.remove();
             }
         });
     }
 
-    // Expose functions globally
     window.pdEditorToolbar = {
         show: showToolbar,
         hide: hideToolbar,
         isVisible: isToolbarVisible
     };
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', enhanceImageEditing);
     } else {
