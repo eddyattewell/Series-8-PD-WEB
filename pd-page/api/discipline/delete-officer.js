@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
         }
 
         // Get officer
-        const officerRows = await supabaseRequest('/rest/v1/discipline_officers?badge_number=ilike.' + encodeURIComponent(badgeNumber) + '&limit=1');
+        const officerRows = await supabaseRequest('/rest/v1/discipline_officers?badge_number=eq.' + encodeURIComponent(badgeNumber) + '&limit=1');
         const officer = Array.isArray(officerRows) ? officerRows[0] : null;
 
         if (!officer) {
@@ -53,17 +53,19 @@ module.exports = async function handler(req, res) {
 
         const officerId = officer.id;
 
-        // Delete all incidents for this officer
-        await supabaseRequest('/rest/v1/discipline_incidents?badge_number=ilike.' + encodeURIComponent(badgeNumber), {
-            method: 'DELETE'
-        });
+        // Delete each incident individually, matching the working Remove button flow.
+        const incidentRows = await supabaseRequest('/rest/v1/discipline_incidents?badge_number=eq.' + encodeURIComponent(badgeNumber) + '&select=id&order=created_at.desc');
+        const incidents = Array.isArray(incidentRows) ? incidentRows : [];
 
-        await supabaseRequest('/rest/v1/discipline_incidents?officer_id=eq.' + encodeURIComponent(String(officerId)), {
-            method: 'DELETE'
-        });
+        for (const incident of incidents) {
+            if (!incident || !incident.id) continue;
+            await supabaseRequest('/rest/v1/discipline_incidents?id=eq.' + encodeURIComponent(String(incident.id)), {
+                method: 'DELETE'
+            });
+        }
 
         // Delete officer
-        await supabaseRequest('/rest/v1/discipline_officers?badge_number=eq.' + encodeURIComponent(badgeNumber), {
+        await supabaseRequest('/rest/v1/discipline_officers?id=eq.' + encodeURIComponent(String(officerId)), {
             method: 'DELETE'
         });
 
