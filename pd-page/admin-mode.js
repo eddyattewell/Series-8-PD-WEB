@@ -6,6 +6,8 @@
     const AUTH_ME_ENDPOINT = '/api/auth/me';
     const DISCORD_LOGIN_URL = '/api/auth/discord/login';
 
+    let hasAccess = false;
+
     function normalizeRole(role) {
         return String(role || '').trim().toLowerCase();
     }
@@ -104,6 +106,11 @@
 
     function updateControls() {
         ensureFloatingControls();
+
+        const loginBtn = getLoginBtn();
+        if (loginBtn) {
+            loginBtn.style.display = hasAccess ? 'none' : 'inline-block';
+        }
     }
 
     function setWarningStrikeAccess(allowed) {
@@ -144,7 +151,7 @@
         ensureFloatingControls();
 
         loadRoles().then(function (roles) {
-            const hasAccess = hasRequiredRole(roles);
+            hasAccess = hasRequiredRole(roles);
             setWarningStrikeAccess(hasAccess);
             updateControls();
         });
