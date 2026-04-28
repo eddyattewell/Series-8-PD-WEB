@@ -186,6 +186,7 @@
         const toolbar = createToolbar();
         toolbar.style.display = 'flex';
         enhanceImageEditing(); // Re-enhance images when entering edit mode
+        makeContentEditable(); // Ensure content is editable
         try {
             localStorage.setItem(TOOLBAR_VISIBLE_KEY, '1');
         } catch { }
@@ -203,6 +204,29 @@
 
     function isToolbarVisible() {
         return document.getElementById(TOOLBAR_ID)?.style.display !== 'none';
+    }
+
+    // Ensure content wrapper is properly set up for editing
+    function makeContentEditable() {
+        const wrapper = document.getElementById('pdEditableContent');
+        if (!wrapper) return;
+
+        wrapper.contentEditable = 'true';
+        wrapper.style.outline = '1px dashed #666';
+        wrapper.style.minHeight = '400px';
+
+        // Allow clicking anywhere in the wrapper to position cursor
+        wrapper.addEventListener('click', (e) => {
+            if (e.target === wrapper) {
+                wrapper.focus();
+                const range = document.createRange();
+                range.setStart(wrapper, wrapper.childNodes.length);
+                range.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
     }
 
     // Make images draggable and resizable in edit mode
@@ -294,9 +318,10 @@
         });
 
         // Make body properly editable - handle clicks in empty areas
-        const body = document.body;
-        body.addEventListener('click', (e) => {
-            if (document.body.contentEditable !== 'true') return;
+        const wrapper = document.getElementById('pdEditableContent') || document.body;
+        wrapper.addEventListener('click', (e) => {
+            const isEditing = wrapper.contentEditable === 'true';
+            if (!isEditing) return;
 
             // Click on image - already handled by img click handler
             if (e.target.tagName === 'IMG') return;
@@ -310,10 +335,10 @@
             });
 
             // If we're in edit mode, ensure focus and position cursor
-            body.focus();
+            wrapper.focus();
             if (window.getSelection().rangeCount === 0) {
                 const range = document.createRange();
-                range.setStart(body, body.childNodes.length);
+                range.setStart(wrapper, wrapper.childNodes.length);
                 range.collapse(true);
                 const selection = window.getSelection();
                 selection.removeAllRanges();

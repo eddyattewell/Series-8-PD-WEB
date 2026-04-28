@@ -168,8 +168,36 @@
         if (!document.body) return;
 
         const next = !!isOn && canUseEditMode;
-        document.body.contentEditable = next ? 'true' : 'false';
-        document.body.spellcheck = next;
+
+        if (next) {
+            // Entering edit mode: wrap content for better editing
+            let wrapper = document.getElementById('pdEditableContent');
+            if (!wrapper) {
+                wrapper = document.createElement('div');
+                wrapper.id = 'pdEditableContent';
+                wrapper.style.cssText = 'outline: 1px dashed #666; padding: 20px;';
+
+                // Move body content into wrapper
+                const controls = document.getElementById('pdEditControls');
+                const children = Array.from(document.body.children);
+                children.forEach(child => {
+                    if (child.id !== 'pdEditControls') {
+                        wrapper.appendChild(child);
+                    }
+                });
+                document.body.insertBefore(wrapper, controls);
+            }
+
+            wrapper.contentEditable = 'true';
+            wrapper.spellcheck = true;
+        } else {
+            // Exiting edit mode: disable editing
+            const wrapper = document.getElementById('pdEditableContent');
+            if (wrapper) {
+                wrapper.contentEditable = 'false';
+            }
+        }
+
         document.body.dataset.adminMode = next ? '1' : '0';
 
         // Show/hide editor toolbar
