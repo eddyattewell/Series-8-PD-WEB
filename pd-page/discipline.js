@@ -5,6 +5,7 @@
     const SUBMIT_ENDPOINT = '/api/discipline/submit';
     const DELETE_ENDPOINT = '/api/discipline/delete';
     const DELETE_OFFICER_ENDPOINT = '/api/discipline/delete-officer';
+    const VIEW_STATE_KEY = 'pd_view_state';
 
     const issueViewEl = document.getElementById('issueView');
     const officerViewEl = document.getElementById('officerView');
@@ -19,7 +20,9 @@
     const statusEl = document.getElementById('formStatus');
     let roster = [];
     let selectedOfficerId = '';
-    const viewMode = new URLSearchParams(window.location.search).get('view') === 'officers' ? 'officers' : 'form';
+    
+    // Get initial view mode: check URL first, then localStorage, then default to 'form'
+    let viewMode = new URLSearchParams(window.location.search).get('view') || localStorage.getItem(VIEW_STATE_KEY) || 'form';
 
     function escapeHtml(value) {
         return String(value || '')
@@ -62,6 +65,11 @@
     }
 
     function setViewMode(mode) {
+        viewMode = mode;
+        try {
+            localStorage.setItem(VIEW_STATE_KEY, mode);
+        } catch {}
+        
         const officersMode = mode === 'officers';
         if (issueViewEl) issueViewEl.classList.toggle('hidden', officersMode);
         if (officerViewEl) officerViewEl.classList.toggle('hidden', !officersMode);
@@ -99,8 +107,7 @@
             '<div class="stat"><span>Strikes</span><strong>' + officer.activeStrikesCount + '</strong></div>',
             '<div class="stat"><span>Flagged</span><strong>' + flagged + '</strong></div>',
             '<div class="stat"><span>Total History</span><strong>' + officer.historyCount + '</strong></div>',
-            '<div class="stat"><span>Status</span><strong>' + (officer.flagged ? 'Flagged' : 'Active') + '</strong></div>',
-            '<div class="stat" style="grid-column:1/-1;text-align:center;border-color:#5c1f1f;background:rgba(92,31,31,0.2);"><button type="button" class="mini-delete-btn" onclick="deleteOfficer(\'' + escapeHtml(String(officer.officerId)) + '\', \'' + escapeHtml(officer.displayName) + '\', \'' + escapeHtml(officer.badgeNumber || 'N/A') + '\')">Delete Officer Record</button></div>'
+            '<div class="stat"><span>Status</span><strong>' + (officer.flagged ? 'Flagged' : 'Active') + '</strong></div>'
         ];
         detailGridEl.innerHTML = statsHtml.join('');
 
@@ -184,8 +191,13 @@
             const active = String(officer.officerId) === String(selectedOfficerId);
             return [
                 '<div class="officer-card' + (active ? ' active' : '') + '" data-officer-id="' + escapeHtml(officer.officerId) + '">',
-                '  <div><strong>' + escapeHtml(officer.displayName) + '</strong></div>',
-                '  <div class="officer-meta">Badge ' + escapeHtml(officer.badgeNumber || 'N/A') + '</div>',
+                '  <div style="display:flex;justify-content:space-between;align-items:center;">',
+                '    <div>',
+                '      <strong>' + escapeHtml(officer.displayName) + '</strong>',
+                '      <div class="officer-meta">Badge ' + escapeHtml(officer.badgeNumber || 'N/A') + '</div>',
+                '    </div>',
+                '    <button type="button" class="officer-delete-btn" data-officer-id="' + escapeHtml(officer.officerId) + '" data-badge="' + escapeHtml(officer.badgeNumber || 'N/A') + '" data-name="' + escapeHtml(officer.displayName) + '" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:1.2rem;padding:4px;margin-top:-20px;">✕</button>',
+                '    </div>',
                 '  <div>',
                 '    <span class="badge warning">' + officer.activeWarningsCount + ' W</span>',
                 '    <span class="badge strike">' + officer.activeStrikesCount + ' S</span>',
@@ -195,7 +207,22 @@
             ].join('');
         }).join('');
 
+        // Add click handlers to officer cards (for selection)
         officerListEl.querySelectorAll('.officer-card').forEach(function (card) {
+            const deleteBtn = card.querySelector('.officer-delete-btn');
+            
+            // Prevent delete click from triggering selection
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const officerId = deleteBtn.getAttribute('data-officer-id');
+                    const badge = deleteBtn.getAttribute('data-badge');
+                    const name = deleteBtn.getAttribute('data-name');
+                    deleteOfficerImmediate(officerId, name, badge);
+                });
+            }
+            
+            // Selection handler
             card.addEventListener('click', function () {
                 selectedOfficerId = card.getAttribute('data-officer-id') || '';
                 loadData(selectedOfficerId);
@@ -235,7 +262,7 @@
         }
     }
 
-    async function deleteOfficer(officerId, displayName, badgeNumber) {
+    async function deleteOfficerImmediate(officerId, displayName, badgeNumber) {
         if (!window.confirm('Delete all records for ' + displayName + ' (Badge ' + badgeNumber + ')? This cannot be undone.')) {
             return;
         }
@@ -262,10 +289,29 @@
         }
     }
 
+    async function deleteOfficer(officerId, displayName, badgeNumber) {
+        await deleteOfficerImmediate(officerId, displayName, badgeNumber);
+    }
+
     if (officerToggleBtn) {
         officerToggleBtn.addEventListener('click', function () {
             const isOpen = officerPanelEl ? officerPanelEl.classList.contains('open') : false;
             setOfficerListOpen(!isOpen);
+        });
+    }
+
+    // Add click handlers for view tabs
+    if (issueTabEl) {
+        issueTabEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            setViewMode('form');
+        });
+    }
+
+    if (officersTabEl) {
+        officersTabEl.addEventListener('click', function (e) {
+            e.preventDefault();
+            setViewMode('officers');
         });
     }
 
