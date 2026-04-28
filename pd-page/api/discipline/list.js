@@ -19,9 +19,9 @@ module.exports = async function handler(req, res) {
         const { incidents, officers } = await getAllOfficers();
         const roster = groupOfficerRows(officers, incidents);
 
-        let selectedOfficer = roster[0] || null;
+        let selectedOfficer = null;
         if (officerId) {
-            selectedOfficer = roster.find((row) => String(row.officerId) === officerId) || selectedOfficer;
+            selectedOfficer = roster.find((row) => String(row.officerId) === officerId) || null;
         }
         if (!selectedOfficer && badgeNumber) {
             selectedOfficer = roster.find((row) => String(row.badgeNumber) === badgeNumber) || null;

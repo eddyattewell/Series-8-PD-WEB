@@ -5,6 +5,10 @@
     const SUBMIT_ENDPOINT = '/api/discipline/submit';
     const DELETE_ENDPOINT = '/api/discipline/delete';
 
+    const issueViewEl = document.getElementById('issueView');
+    const officerViewEl = document.getElementById('officerView');
+    const issueTabEl = document.getElementById('issueTab');
+    const officersTabEl = document.getElementById('officersTab');
     const officerPanelEl = document.getElementById('officerPanel');
     const officerToggleBtn = document.getElementById('officerToggleBtn');
     const officerListEl = document.getElementById('officerList');
@@ -14,6 +18,7 @@
     const statusEl = document.getElementById('formStatus');
     let roster = [];
     let selectedOfficerId = '';
+    const viewMode = new URLSearchParams(window.location.search).get('view') === 'officers' ? 'officers' : 'form';
 
     function escapeHtml(value) {
         return String(value || '')
@@ -52,6 +57,18 @@
         }
         if (officerToggleBtn) {
             officerToggleBtn.textContent = isOpen ? 'Hide Officers' : 'View Officers';
+        }
+    }
+
+    function setViewMode(mode) {
+        const officersMode = mode === 'officers';
+        if (issueViewEl) issueViewEl.classList.toggle('hidden', officersMode);
+        if (officerViewEl) officerViewEl.classList.toggle('hidden', !officersMode);
+        if (issueTabEl) issueTabEl.classList.toggle('active', !officersMode);
+        if (officersTabEl) officersTabEl.classList.toggle('active', officersMode);
+        setOfficerListOpen(officersMode);
+        if (!officersMode) {
+            selectedOfficerId = '';
         }
     }
 
@@ -222,6 +239,8 @@
         });
     }
 
+    setViewMode(viewMode);
+
     if (formEl) {
         formEl.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -259,5 +278,4 @@
     }
 
     loadData('');
-    setOfficerListOpen(false);
 })();
