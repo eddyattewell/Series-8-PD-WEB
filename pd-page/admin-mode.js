@@ -175,7 +175,13 @@
             if (!wrapper) {
                 wrapper = document.createElement('div');
                 wrapper.id = 'pdEditableContent';
-                wrapper.style.cssText = 'outline: 1px dashed #666; padding: 20px;';
+                wrapper.style.cssText = `
+                    position: relative;
+                    outline: 2px dashed #666;
+                    padding: 20px;
+                    min-height: 600px;
+                    background: rgba(0,0,0,0.02);
+                `;
 
                 // Move body content into wrapper
                 const controls = document.getElementById('pdEditControls');
@@ -190,11 +196,16 @@
 
             wrapper.contentEditable = 'true';
             wrapper.spellcheck = true;
+
+            // Enable free image positioning
+            enableFreeImagePositioning();
         } else {
             // Exiting edit mode: save and disable editing
             const wrapper = document.getElementById('pdEditableContent');
             if (wrapper) {
                 wrapper.contentEditable = 'false';
+                wrapper.style.outline = 'none';
+                wrapper.style.background = 'none';
                 // Auto-save changes
                 savePage();
             }
@@ -216,6 +227,72 @@
         }
 
         updateControls();
+    }
+
+    function enableFreeImagePositioning() {
+        const wrapper = document.getElementById('pdEditableContent');
+        if (!wrapper) return;
+
+        const images = wrapper.querySelectorAll('img');
+        images.forEach(img => {
+            if (img.dataset.adminControl === '1') return;
+            img.style.cursor = 'grab';
+            img.dataset.isDragging = 'false';
+        });
+
+        // Mouse down on image - start drag
+        wrapper.addEventListener('mousedown', (e) => {
+            if (e.target.tagName !== 'IMG') return;
+            const img = e.target;
+            if (img.dataset.adminControl === '1') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            img.style.cursor = 'grabbing';
+            img.dataset.isDragging = 'true';
+            img.style.outline = '2px solid #e53935';
+            img.style.outlineOffset = '2px';
+            img.style.position = 'absolute';
+            img.style.zIndex = '1000';
+
+            const rect = wrapper.getBoundingClientRect();
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startLeft = img.offsetLeft;
+            const startTop = img.offsetTop;
+
+            function onMouseMove(moveEvent) {
+                const deltaX = moveEvent.clientX - startX;
+                const deltaY = moveEvent.clientY - startY;
+
+                img.style.left = (startLeft + deltaX) + 'px';
+                img.style.top = (startTop + deltaY) + 'px';
+            }
+
+            function onMouseUp() {
+                img.style.cursor = 'grab';
+                img.dataset.isDragging = 'false';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        // Click anywhere else to place text cursor
+        wrapper.addEventListener('click', (e) => {
+            if (e.target === wrapper || e.target.tagName === 'BR') {
+                wrapper.focus();
+                const range = document.createRange();
+                range.setStart(wrapper, 0);
+                range.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
     }
 
     function savePage() {
