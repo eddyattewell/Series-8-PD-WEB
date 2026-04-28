@@ -22,7 +22,7 @@ function getSession(req) {
 }
 
 module.exports = async function handler(req, res) {
-    if (req.method !== 'DELETE') {
+    if (req.method !== 'POST' && req.method !== 'DELETE') {
         res.status(405).json({ error: 'Method not allowed' });
         return;
     }
@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
 
     try {
         const body = req.body && typeof req.body === 'object' ? req.body : {};
-        const badgeNumber = normalizeBadge(body.badgeNumber);
+        const badgeNumber = normalizeBadge(body.badgeNumber || req.query.badgeNumber);
 
         if (!badgeNumber) {
             res.status(400).json({ error: 'Badge number is required' });
@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
         }
 
         // Get officer
-        const officerRows = await supabaseRequest('/rest/v1/discipline_officers?badge_number=eq.' + encodeURIComponent(badgeNumber) + '&limit=1');
+        const officerRows = await supabaseRequest('/rest/v1/discipline_officers?badge_number=ilike.' + encodeURIComponent(badgeNumber) + '&limit=1');
         const officer = Array.isArray(officerRows) ? officerRows[0] : null;
 
         if (!officer) {

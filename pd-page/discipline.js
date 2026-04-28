@@ -191,13 +191,13 @@
             const active = String(officer.officerId) === String(selectedOfficerId);
             return [
                 '<div class="officer-card' + (active ? ' active' : '') + '" data-officer-id="' + escapeHtml(officer.officerId) + '">',
-                '  <div style="display:flex;justify-content:space-between;align-items:center;">',
-                '    <div>',
+                '  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">',
+                '    <div style="min-width:0;">',
                 '      <strong>' + escapeHtml(officer.displayName) + '</strong>',
                 '      <div class="officer-meta">Badge ' + escapeHtml(officer.badgeNumber || 'N/A') + '</div>',
                 '    </div>',
-                '    <button type="button" class="officer-delete-btn" data-officer-id="' + escapeHtml(officer.officerId) + '" data-badge="' + escapeHtml(officer.badgeNumber || 'N/A') + '" data-name="' + escapeHtml(officer.displayName) + '" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:1.2rem;padding:4px;margin-top:-20px;">✕</button>',
-                '    </div>',
+                '    <button type="button" class="officer-delete-btn" data-officer-id="' + escapeHtml(officer.officerId) + '" data-badge="' + escapeHtml(officer.badgeNumber || 'N/A') + '" data-name="' + escapeHtml(officer.displayName) + '" style="background:#2b1212;border:1px solid #7a1f1f;color:#ff8a80;cursor:pointer;font-size:0.84rem;padding:6px 10px;border-radius:999px;white-space:nowrap;">Delete</button>',
+                '  </div>',
                 '  <div>',
                 '    <span class="badge warning">' + officer.activeWarningsCount + ' W</span>',
                 '    <span class="badge strike">' + officer.activeStrikesCount + ' S</span>',
@@ -215,6 +215,7 @@
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', function (e) {
                     e.stopPropagation();
+                    e.preventDefault();
                     const officerId = deleteBtn.getAttribute('data-officer-id');
                     const badge = deleteBtn.getAttribute('data-badge');
                     const name = deleteBtn.getAttribute('data-name');
@@ -270,7 +271,7 @@
         try {
             setStatus('Deleting officer...');
             const response = await fetch(DELETE_OFFICER_ENDPOINT, {
-                method: 'DELETE',
+                method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ badgeNumber: badgeNumber })
