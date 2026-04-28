@@ -56,7 +56,7 @@ function normalizeName(value) {
 }
 
 function normalizeBadge(value) {
-    return String(value || '').trim();
+    return String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
 }
 
 function normalizeType(value) {
@@ -270,11 +270,11 @@ async function upsertOfficerProfile({ officerName, badgeNumber }) {
     const normalizedOfficerName = normalizeName(officerName);
     const normalizedBadge = normalizeBadge(badgeNumber);
 
-    const existing = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=eq.' + encodeURIComponent(normalizedBadge) + '&limit=1');
+    const existing = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=ilike.' + encodeURIComponent(normalizedBadge) + '&limit=1');
     const row = Array.isArray(existing) ? existing[0] : null;
 
     if (row) {
-        const updated = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizedBadge), {
+        const updated = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?id=eq.' + encodeURIComponent(String(row.id)), {
             method: 'PATCH',
             body: JSON.stringify({
                 display_name: normalizedOfficerName,
@@ -301,7 +301,7 @@ async function upsertOfficerProfile({ officerName, badgeNumber }) {
 
 async function getOfficerByBadge(badgeNumber) {
     const normalizedBadge = normalizeBadge(badgeNumber);
-    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=eq.' + encodeURIComponent(normalizedBadge) + '&limit=1');
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=ilike.' + encodeURIComponent(normalizedBadge) + '&limit=1');
     return Array.isArray(rows) ? rows[0] || null : null;
 }
 
@@ -409,11 +409,11 @@ async function flagOfficerIfNeeded(officerId, badgeNumber) {
     const activeStrikes = incidents.filter((item) => item.type === 'strike' && item.active);
     if (activeStrikes.length < 3) return false;
 
-    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)) + '&limit=1');
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=ilike.' + encodeURIComponent(normalizeBadge(badgeNumber)) + '&limit=1');
     const officer = Array.isArray(rows) ? rows[0] : null;
     if (!officer) return false;
 
-    await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)), {
+    await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?id=eq.' + encodeURIComponent(String(officer.id)), {
         method: 'PATCH',
         body: JSON.stringify({ flagged: true, flagged_at: nowIso(), updated_at: nowIso() })
     });
