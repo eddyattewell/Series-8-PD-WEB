@@ -191,10 +191,12 @@
             wrapper.contentEditable = 'true';
             wrapper.spellcheck = true;
         } else {
-            // Exiting edit mode: disable editing
+            // Exiting edit mode: save and disable editing
             const wrapper = document.getElementById('pdEditableContent');
             if (wrapper) {
                 wrapper.contentEditable = 'false';
+                // Auto-save changes
+                savePage();
             }
         }
 
@@ -214,6 +216,67 @@
         }
 
         updateControls();
+    }
+
+    function savePage() {
+        const wrapper = document.getElementById('pdEditableContent');
+        if (!wrapper) return;
+
+        // Get the current page path
+        const pagePath = window.location.pathname.replace(/^\//, '');
+
+        // Reconstruct the full HTML with edited content
+        const editedContent = wrapper.innerHTML;
+        const controls = document.getElementById('pdEditControls');
+        const toolbar = document.getElementById('pdEditorToolbar');
+
+        // Build new HTML (keeping head and structure)
+        let newHTML = document.documentElement.outerHTML;
+
+        // Replace the content in the new HTML
+        newHTML = newHTML.replace(
+            /<div id="pdEditableContent"[^>]*>[\s\S]*?<\/div>/,
+            '<div id="pdEditableContent">' + editedContent + '</div>'
+        );
+
+        // Send to save endpoint
+        fetch('/api/page/save', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filePath: pagePath,
+                content: newHTML
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.ok) {
+                console.log('Page saved successfully');
+                // Show a brief notification
+                const status = document.createElement('div');
+                status.textContent = '✓ Changes saved!';
+                status.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #4caf50;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    z-index: 99999;
+                `;
+                document.body.appendChild(status);
+                setTimeout(() => status.remove(), 2000);
+            } else {
+                alert('Error saving page: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            console.error('Save error:', err);
+            alert('Failed to save page. Check console for details.');
+        });
     }
 
     function setWarningStrikeAccess(allowed) {
@@ -311,4 +374,15 @@
     } else {
         initialize();
     }
+
+    // Expose for onclick handlers
+    window.toggleAdminMode = function () {
+        if (!canUseEditMode) {
+            alert('Edit Mode is restricted to Gold Command.');
+            return;
+        }
+        setAdminMode(!isAdminModeEnabled());
+    };
+
+    window.savePage = savePage;
 })();

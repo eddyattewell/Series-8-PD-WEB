@@ -101,7 +101,8 @@
                 buttons: [
                     { cmd: 'removeFormat', label: 'Clear', title: 'Clear formatting' },
                     { cmd: 'undo', label: '↶', title: 'Undo' },
-                    { cmd: 'redo', label: '↷', title: 'Redo' }
+                    { cmd: 'redo', label: '↷', title: 'Redo' },
+                    { type: 'save', label: '💾 Save', title: 'Save changes' }
                 ]
             }
         ];
@@ -151,6 +152,36 @@
                         }
                     });
                     groupDiv.appendChild(input);
+                } else if (btn.type === 'save') {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.textContent = btn.label;
+                    button.title = btn.title;
+                    button.dataset.adminControl = '1';
+                    button.style.cssText = `
+                        padding: 6px 10px;
+                        background: #1b5e20;
+                        color: #fff;
+                        border: 1px solid #2e7d32;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        min-width: 80px;
+                        font-weight: bold;
+                    `;
+                    button.addEventListener('mouseover', () => {
+                        button.style.background = '#2e7d32';
+                    });
+                    button.addEventListener('mouseout', () => {
+                        button.style.background = '#1b5e20';
+                    });
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (window.savePage) {
+                            window.savePage();
+                        }
+                    });
+                    groupDiv.appendChild(button);
                 } else {
                     const button = document.createElement('button');
                     button.type = 'button';
