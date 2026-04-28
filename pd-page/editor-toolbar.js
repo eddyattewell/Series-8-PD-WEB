@@ -213,6 +213,7 @@
 
             img.style.maxWidth = '100%';
             img.style.cursor = 'grab';
+            img.dataset.dragging = 'false';
 
             // Make image selectable
             img.addEventListener('click', (e) => {
@@ -234,22 +235,62 @@
 
             // Make draggable
             img.draggable = true;
+
             img.addEventListener('dragstart', (e) => {
                 if (document.body.contentEditable !== 'true') return;
-                e.dataTransfer.effectAllowed = 'move';
+                e.preventDefault();
+                img.dataset.dragging = 'true';
                 img.style.opacity = '0.5';
+                img.style.cursor = 'grabbing';
             });
 
             img.addEventListener('dragend', (e) => {
+                img.dataset.dragging = 'false';
                 img.style.opacity = '1';
+                img.style.cursor = 'grab';
             });
         });
 
-        // Allow drop on the page
+        // Global drag handlers for repositioning
+        let draggedImg = null;
+
+        document.addEventListener('dragstart', (e) => {
+            if (document.body.contentEditable !== 'true') return;
+            if (e.target.tagName === 'IMG') {
+                draggedImg = e.target;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', e.target.outerHTML);
+            }
+        }, true);
+
         document.addEventListener('dragover', (e) => {
             if (document.body.contentEditable !== 'true') return;
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
+        });
+
+        document.addEventListener('drop', (e) => {
+            if (document.body.contentEditable !== 'true') return;
+            if (!draggedImg) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Get the drop position
+            const dropTarget = e.target;
+
+            // If dropping on the body or a non-image element, insert after
+            if (dropTarget !== draggedImg && dropTarget.tagName !== 'IMG') {
+                if (dropTarget === document.body) {
+                    // Append to body
+                    document.body.appendChild(draggedImg);
+                } else {
+                    // Insert after the drop target
+                    dropTarget.parentNode.insertBefore(draggedImg, dropTarget.nextSibling);
+                }
+            }
+
+            draggedImg = null;
         });
 
         // Make body properly editable - handle clicks in empty areas
