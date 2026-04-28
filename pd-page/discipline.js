@@ -9,8 +9,6 @@
     const historyListEl = document.getElementById('historyList');
     const formEl = document.getElementById('disciplineForm');
     const statusEl = document.getElementById('formStatus');
-    const titleEl = document.getElementById('selectedOfficerTitle');
-
     let roster = [];
     let selectedOfficerId = '';
 
@@ -67,9 +65,6 @@
             '<div class="stat"><span>Status</span><strong>' + (officer.flagged ? 'Flagged' : 'Active') + '</strong></div>',
         ].join('');
 
-        if (titleEl) {
-            titleEl.textContent = officer.displayName + ' • Badge ' + (officer.badgeNumber || 'N/A');
-        }
     }
 
     function renderHistory(officer, history) {
