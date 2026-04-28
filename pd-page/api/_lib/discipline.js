@@ -1,0 +1,481 @@
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const TABLE_OFFICERS = 'discipline_officers';
+const TABLE_INCIDENTS = 'discipline_incidents';
+const TABLE_PANEL = 'discipline_panels';
+
+function requireEnv() {
+    if (!SUPABASE_URL) {
+        throw new Error('Missing SUPABASE_URL environment variable');
+    }
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+    }
+}
+
+function getSupabaseUrl(path) {
+    return SUPABASE_URL.replace(/\/$/, '') + path;
+}
+
+async function supabaseRequest(path, options = {}) {
+    requireEnv();
+
+    const response = await fetch(getSupabaseUrl(path), {
+        ...options,
+        headers: {
+            apikey: SUPABASE_SERVICE_ROLE_KEY,
+            Authorization: 'Bearer ' + SUPABASE_SERVICE_ROLE_KEY,
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        }
+    });
+
+    const text = await response.text();
+    let data = null;
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = { raw: text };
+        }
+    }
+
+    if (!response.ok) {
+        const error = new Error('Supabase request failed: ' + response.status);
+        error.status = response.status;
+        error.data = data;
+        throw error;
+    }
+
+    return data;
+}
+
+function normalizeName(value) {
+    return String(value || '').trim();
+}
+
+function normalizeBadge(value) {
+    return String(value || '').trim();
+}
+
+function normalizeType(value) {
+    const type = String(value || '').trim().toLowerCase();
+    if (type === 'warning' || type === 'strike') return type;
+    return null;
+}
+
+function nowIso() {
+    return new Date().toISOString();
+}
+
+function addDays(dateIso, days) {
+    const date = new Date(dateIso);
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+}
+
+async function getAllOfficers() {
+    const incidents = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?select=*&order=created_at.desc');
+    const officers = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&order=display_name.asc');
+    return { incidents: incidents || [], officers: officers || [] };
+}
+
+async function getPanelSettings(panelName) {
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_PANEL + '?select=*&panel_name=eq.' + encodeURIComponent(panelName) + '&limit=1');
+    return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+async function savePanelSettings(panelName, settings) {
+    const existing = await getPanelSettings(panelName);
+    const payload = {
+        panel_name: panelName,
+        channel_id: settings.channelId || null,
+        message_id: settings.messageId || null,
+        updated_at: nowIso()
+    };
+
+    if (existing && existing.id) {
+        await supabaseRequest('/rest/v1/' + TABLE_PANEL + '?id=eq.' + encodeURIComponent(existing.id), {
+            method: 'PATCH',
+            body: JSON.stringify(payload)
+        });
+        return { ...existing, ...payload };
+    }
+
+    const inserted = await supabaseRequest('/rest/v1/' + TABLE_PANEL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+
+    return Array.isArray(inserted) ? inserted[0] : inserted;
+}
+
+function groupOfficerRows(officers, incidents) {
+    const byOfficerId = new Map();
+    const byBadge = new Map();
+
+    officers.forEach((officer) => {
+        if (!officer) return;
+        const key = officer.id || officer.badge_number || officer.display_name;
+        byOfficerId.set(String(key), officer);
+        if (officer.badge_number) byBadge.set(normalizeBadge(officer.badge_number), officer);
+    });
+
+    incidents.forEach((incident) => {
+        if (!incident) return;
+        const existing = incident.officer_id ? byOfficerId.get(String(incident.officer_id)) : null;
+        if (existing) return;
+        const badgeMatch = incident.badge_number ? byBadge.get(normalizeBadge(incident.badge_number)) : null;
+        if (badgeMatch) {
+            byOfficerId.set(String(badgeMatch.id || badgeMatch.badge_number || badgeMatch.display_name), badgeMatch);
+        }
+    });
+
+    const grouped = new Map();
+
+    officers.forEach((officer) => {
+        if (!officer) return;
+        const officerId = String(officer.id || officer.badge_number || officer.display_name);
+        grouped.set(officerId, {
+            officerId,
+            displayName: officer.display_name || officer.officer_name || 'Unknown Officer',
+            badgeNumber: officer.badge_number || '',
+            flagged: !!officer.flagged,
+            flaggedAt: officer.flagged_at || null,
+            warnings: [],
+            strikes: []
+        });
+    });
+
+    incidents.forEach((incident) => {
+        if (!incident) return;
+        const type = normalizeType(incident.type);
+        if (!type) return;
+        const badge = normalizeBadge(incident.badge_number);
+        const officerKey = incident.officer_id ? String(incident.officer_id) : badge;
+        let row = grouped.get(officerKey);
+        if (!row && badge) {
+            const officer = byBadge.get(badge);
+            if (officer) {
+                const resolvedKey = String(officer.id || officer.badge_number || officer.display_name);
+                row = grouped.get(resolvedKey);
+                if (!row) {
+                    row = {
+                        officerId: resolvedKey,
+                        displayName: officer.display_name || incident.officer_name || 'Unknown Officer',
+                        badgeNumber: officer.badge_number || badge,
+                        flagged: !!officer.flagged,
+                        flaggedAt: officer.flagged_at || null,
+                        warnings: [],
+                        strikes: []
+                    };
+                    grouped.set(resolvedKey, row);
+                }
+            }
+        }
+
+        if (!row) {
+            row = {
+                officerId: officerKey || badge || incident.officer_name,
+                displayName: incident.officer_name || 'Unknown Officer',
+                badgeNumber: badge,
+                flagged: false,
+                flaggedAt: null,
+                warnings: [],
+                strikes: []
+            };
+            grouped.set(String(row.officerId), row);
+        }
+
+        const expired = incident.expires_at && new Date(incident.expires_at).getTime() <= Date.now();
+        const item = {
+            id: incident.id,
+            officerName: incident.officer_name,
+            badgeNumber: badge,
+            reason: incident.reason,
+            type,
+            createdAt: incident.created_at,
+            expiresAt: incident.expires_at,
+            expired,
+            active: !expired
+        };
+
+        if (type === 'warning') row.warnings.push(item);
+        if (type === 'strike') row.strikes.push(item);
+        if (incident.flagged) row.flagged = true;
+        if (incident.flagged_at && !row.flaggedAt) row.flaggedAt = incident.flagged_at;
+    });
+
+    const rows = Array.from(grouped.values()).map((row) => {
+        const activeWarnings = row.warnings.filter((item) => item.active);
+        const activeStrikes = row.strikes.filter((item) => item.active);
+        return {
+            ...row,
+            activeWarningsCount: activeWarnings.length,
+            activeStrikesCount: activeStrikes.length,
+            historyCount: row.warnings.length + row.strikes.length,
+            activeHistoryCount: activeWarnings.length + activeStrikes.length,
+            profileSummary: `${row.displayName} - ${activeWarnings.length} warning(s), ${activeStrikes.length} strike(s)`
+        };
+    });
+
+    rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+    return rows;
+}
+
+function resolveCounts(officerRow) {
+    const activeWarnings = officerRow.warnings.filter((item) => item.active);
+    const activeStrikes = officerRow.strikes.filter((item) => item.active);
+    return {
+        warnings: activeWarnings,
+        strikes: activeStrikes,
+        warningCount: activeWarnings.length,
+        strikeCount: activeStrikes.length
+    };
+}
+
+async function upsertOfficerProfile({ officerName, badgeNumber }) {
+    const normalizedOfficerName = normalizeName(officerName);
+    const normalizedBadge = normalizeBadge(badgeNumber);
+
+    const existing = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=eq.' + encodeURIComponent(normalizedBadge) + '&limit=1');
+    const row = Array.isArray(existing) ? existing[0] : null;
+
+    if (row) {
+        const updated = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizedBadge), {
+            method: 'PATCH',
+            body: JSON.stringify({
+                display_name: normalizedOfficerName,
+                badge_number: normalizedBadge,
+                updated_at: nowIso()
+            })
+        });
+        return Array.isArray(updated) ? updated[0] : row;
+    }
+
+    const inserted = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS, {
+        method: 'POST',
+        body: JSON.stringify({
+            display_name: normalizedOfficerName,
+            badge_number: normalizedBadge,
+            flagged: false,
+            created_at: nowIso(),
+            updated_at: nowIso()
+        })
+    });
+
+    return Array.isArray(inserted) ? inserted[0] : inserted;
+}
+
+async function getOfficerByBadge(badgeNumber) {
+    const normalizedBadge = normalizeBadge(badgeNumber);
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?select=*&badge_number=eq.' + encodeURIComponent(normalizedBadge) + '&limit=1');
+    return Array.isArray(rows) ? rows[0] || null : null;
+}
+
+async function getIncidentHistory(officerId, badgeNumber) {
+    const queryParts = [];
+    if (officerId) queryParts.push('officer_id=eq.' + encodeURIComponent(String(officerId)));
+    if (badgeNumber) queryParts.push('badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)));
+
+    const query = queryParts.length ? '?' + queryParts.join('&') + '&order=created_at.desc' : '?order=created_at.desc';
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + query);
+    return Array.isArray(rows) ? rows : [];
+}
+
+async function createIncident({ officerName, badgeNumber, reason, type, createdBy }) {
+    const normalizedOfficerName = normalizeName(officerName);
+    const normalizedBadge = normalizeBadge(badgeNumber);
+    const normalizedReason = normalizeName(reason);
+    const normalizedType = normalizeType(type);
+
+    if (!normalizedOfficerName) throw new Error('Officer name is required');
+    if (!normalizedBadge) throw new Error('Badge number is required');
+    if (!normalizedReason) throw new Error('Reason is required');
+    if (!normalizedType) throw new Error('Type must be warning or strike');
+
+    const officer = await upsertOfficerProfile({ officerName: normalizedOfficerName, badgeNumber: normalizedBadge });
+    const officerId = officer && officer.id ? officer.id : null;
+
+    const incident = {
+        officer_id: officerId,
+        officer_name: normalizedOfficerName,
+        badge_number: normalizedBadge,
+        reason: normalizedReason,
+        type: normalizedType,
+        created_at: nowIso(),
+        expires_at: addDays(nowIso(), 14),
+        created_by: createdBy || null,
+        active: true,
+        flagged: false,
+        flagged_at: null
+    };
+
+    const inserted = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS, {
+        method: 'POST',
+        body: JSON.stringify(incident)
+    });
+
+    return Array.isArray(inserted) ? inserted[0] : inserted;
+}
+
+async function refreshExpiredIncidents() {
+    const now = nowIso();
+    const incidents = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?select=*&active=eq.true&order=created_at.desc');
+    const expired = (Array.isArray(incidents) ? incidents : []).filter((item) => item && item.expires_at && new Date(item.expires_at).getTime() <= Date.now());
+
+    if (!expired.length) return [];
+
+    await Promise.all(expired.map((item) => {
+        return supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?id=eq.' + encodeURIComponent(item.id), {
+            method: 'PATCH',
+            body: JSON.stringify({ active: false, expired_at: now })
+        });
+    }));
+
+    return expired;
+}
+
+async function applyWarningToStrikeRule(officerId, badgeNumber) {
+    const allIncidents = await getIncidentHistory(officerId, badgeNumber);
+    const activeWarnings = allIncidents.filter((item) => item.type === 'warning' && item.active);
+    if (activeWarnings.length < 3) return null;
+
+    const warningIds = activeWarnings.slice(0, 3).map((item) => item.id);
+    await Promise.all(warningIds.map((id) => {
+        return supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?id=eq.' + encodeURIComponent(id), {
+            method: 'PATCH',
+            body: JSON.stringify({ active: false, converted_to_strike: true })
+        });
+    }));
+
+    const convertedStrike = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS, {
+        method: 'POST',
+        body: JSON.stringify({
+            officer_id: officerId,
+            officer_name: allIncidents[0] ? allIncidents[0].officer_name : 'Unknown Officer',
+            badge_number: normalizeBadge(badgeNumber),
+            reason: 'Automatic strike issued after 3 active warnings',
+            type: 'strike',
+            created_at: nowIso(),
+            expires_at: addDays(nowIso(), 14),
+            created_by: 'system',
+            active: true,
+            auto_generated: true
+        })
+    });
+
+    return Array.isArray(convertedStrike) ? convertedStrike[0] : convertedStrike;
+}
+
+async function flagOfficerIfNeeded(officerId, badgeNumber) {
+    const incidents = await getIncidentHistory(officerId, badgeNumber);
+    const activeStrikes = incidents.filter((item) => item.type === 'strike' && item.active);
+    if (activeStrikes.length < 3) return false;
+
+    const rows = await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)) + '&limit=1');
+    const officer = Array.isArray(rows) ? rows[0] : null;
+    if (!officer) return false;
+
+    await supabaseRequest('/rest/v1/' + TABLE_OFFICERS + '?badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)), {
+        method: 'PATCH',
+        body: JSON.stringify({ flagged: true, flagged_at: nowIso(), updated_at: nowIso() })
+    });
+
+    return true;
+}
+
+function buildDiscordPanelPayload(roster) {
+    const lines = roster.length
+        ? roster.slice(0, 25).map((officer) => {
+            const parts = [
+                '**' + officer.displayName + '**',
+                officer.badgeNumber ? 'Badge ' + officer.badgeNumber : 'Badge N/A',
+                officer.activeWarningsCount + ' warning(s)',
+                officer.activeStrikesCount + ' strike(s)'
+            ];
+
+            if (officer.flagged) parts.push('FLAGGED');
+            return parts.join(' • ');
+        }).join('\n')
+        : 'No officers have active warnings or strikes.';
+
+    return {
+        embeds: [{
+            title: 'Series 8 PD Discipline Panel',
+            description: lines,
+            color: 15158332,
+            footer: {
+                text: 'Warnings expire after 14 days unless refreshed by a new incident.'
+            },
+            timestamp: new Date().toISOString()
+        }]
+    };
+}
+
+async function syncDiscordPanel(roster) {
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    const channelId = process.env.DISCORD_DISCIPLINE_CHANNEL_ID;
+    if (!botToken || !channelId) return null;
+
+    const panelName = 'warning-strike-panel';
+    const panelSettings = await getPanelSettings(panelName);
+    const payload = buildDiscordPanelPayload(roster);
+    const headers = {
+        Authorization: 'Bot ' + botToken,
+        'Content-Type': 'application/json'
+    };
+
+    if (panelSettings && panelSettings.message_id) {
+        const updateRes = await fetch('https://discord.com/api/v10/channels/' + channelId + '/messages/' + panelSettings.message_id, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(payload)
+        });
+
+        if (updateRes.ok) return { updated: true, messageId: panelSettings.message_id };
+    }
+
+    const createRes = await fetch('https://discord.com/api/v10/channels/' + channelId + '/messages', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+    });
+
+    if (!createRes.ok) return null;
+
+    const created = await createRes.json();
+    if (created && created.id) {
+        await savePanelSettings(panelName, { channelId, messageId: created.id });
+    }
+
+    return created;
+}
+
+module.exports = {
+    TABLE_OFFICERS,
+    TABLE_INCIDENTS,
+    TABLE_PANEL,
+    getAllOfficers,
+    groupOfficerRows,
+    resolveCounts,
+    upsertOfficerProfile,
+    getOfficerByBadge,
+    getIncidentHistory,
+    createIncident,
+    refreshExpiredIncidents,
+    applyWarningToStrikeRule,
+    flagOfficerIfNeeded,
+    normalizeName,
+    normalizeBadge,
+    normalizeType,
+    addDays,
+    nowIso
+    ,
+    getPanelSettings,
+    savePanelSettings,
+    buildDiscordPanelPayload,
+    syncDiscordPanel
+};
