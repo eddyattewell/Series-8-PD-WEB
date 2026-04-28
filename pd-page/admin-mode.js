@@ -156,6 +156,7 @@
             editBtn.disabled = !canUseEditMode;
             editBtn.style.opacity = canUseEditMode ? '1' : '0.6';
             editBtn.title = canUseEditMode ? '' : 'Gold Command role required';
+            editBtn.style.display = canUseEditMode ? 'inline-block' : 'none';
         }
 
         if (loginBtn) {
@@ -181,6 +182,12 @@
     }
 
     function setWarningStrikeAccess(allowed) {
+        // Hide/show Forms dropdown in navbar
+        const formsDropdown = document.getElementById('formsDropdown');
+        if (formsDropdown) {
+            formsDropdown.style.display = allowed ? '' : 'none';
+        }
+
         const links = document.querySelectorAll('a[href*="Warning-Strike Form.html"]');
         links.forEach(function (link) {
             if (allowed) {

@@ -527,5 +527,6 @@ module.exports = {
     getPanelSettings,
     savePanelSettings,
     buildDiscordPanelPayload,
-    syncDiscordPanel
+    syncDiscordPanel,
+    supabaseRequest
 };

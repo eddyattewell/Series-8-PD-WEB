@@ -4,6 +4,7 @@
     const LIST_ENDPOINT = '/api/discipline/list';
     const SUBMIT_ENDPOINT = '/api/discipline/submit';
     const DELETE_ENDPOINT = '/api/discipline/delete';
+    const DELETE_OFFICER_ENDPOINT = '/api/discipline/delete-officer';
 
     const issueViewEl = document.getElementById('issueView');
     const officerViewEl = document.getElementById('officerView');
@@ -91,7 +92,7 @@
         }
 
         const flagged = officer.flagged ? 'Yes' : 'No';
-        detailGridEl.innerHTML = [
+        const statsHtml = [
             '<div class="stat"><span>Officer</span><strong>' + escapeHtml(officer.displayName) + '</strong></div>',
             '<div class="stat"><span>Badge</span><strong>' + escapeHtml(officer.badgeNumber || 'N/A') + '</strong></div>',
             '<div class="stat"><span>Warnings</span><strong>' + officer.activeWarningsCount + '</strong></div>',
@@ -99,7 +100,9 @@
             '<div class="stat"><span>Flagged</span><strong>' + flagged + '</strong></div>',
             '<div class="stat"><span>Total History</span><strong>' + officer.historyCount + '</strong></div>',
             '<div class="stat"><span>Status</span><strong>' + (officer.flagged ? 'Flagged' : 'Active') + '</strong></div>',
-        ].join('');
+            '<div class="stat" style="grid-column:1/-1;text-align:center;border-color:#5c1f1f;background:rgba(92,31,31,0.2);"><button type="button" class="mini-delete-btn" onclick="deleteOfficer(\'' + escapeHtml(String(officer.officerId)) + '\', \'' + escapeHtml(officer.displayName) + '\', \'' + escapeHtml(officer.badgeNumber || 'N/A') + '\')">Delete Officer Record</button></div>'
+        ];
+        detailGridEl.innerHTML = statsHtml.join('');
 
     }
 
@@ -232,6 +235,33 @@
         }
     }
 
+    async function deleteOfficer(officerId, displayName, badgeNumber) {
+        if (!window.confirm('Delete all records for ' + displayName + ' (Badge ' + badgeNumber + ')? This cannot be undone.')) {
+            return;
+        }
+
+        try {
+            setStatus('Deleting officer...');
+            const response = await fetch(DELETE_OFFICER_ENDPOINT, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ badgeNumber: badgeNumber })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data && data.error ? data.error : 'Failed to delete officer');
+            }
+
+            setStatus('Officer deleted successfully.');
+            selectedOfficerId = '';
+            await loadData('');
+        } catch (error) {
+            setStatus(error.message, true);
+        }
+    }
+
     if (officerToggleBtn) {
         officerToggleBtn.addEventListener('click', function () {
             const isOpen = officerPanelEl ? officerPanelEl.classList.contains('open') : false;
@@ -278,4 +308,7 @@
     }
 
     loadData('');
+
+    // Expose for onclick handlers
+    window.deleteOfficer = deleteOfficer;
 })();
