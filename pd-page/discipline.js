@@ -65,7 +65,6 @@
             '<div class="stat"><span>Flagged</span><strong>' + flagged + '</strong></div>',
             '<div class="stat"><span>Total History</span><strong>' + officer.historyCount + '</strong></div>',
             '<div class="stat"><span>Status</span><strong>' + (officer.flagged ? 'Flagged' : 'Active') + '</strong></div>',
-            // Profile summary removed (redundant with Warnings / Strikes fields)
         ].join('');
 
         if (titleEl) {
