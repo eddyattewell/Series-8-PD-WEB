@@ -7,11 +7,22 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { pagePath, content } = req.body;
+        // Parse body - handle both pre-parsed and raw
+        let body = req.body;
+        if (typeof body === 'string') {
+            body = JSON.parse(body);
+        }
+
+        const pagePath = body?.pagePath;
+        const content = body?.content;
+
+        console.log('Save request:', { pagePath: pagePath?.substring(0, 50), contentLength: content?.length });
 
         if (!pagePath || !content) {
-            res.status(400).json({ error: 'pagePath and content are required' });
-            return;
+            return res.status(400).json({
+                error: 'pagePath and content are required',
+                received: { pagePath: !!pagePath, content: !!content }
+            });
         }
 
         // Save to Supabase
