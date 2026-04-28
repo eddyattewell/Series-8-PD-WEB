@@ -269,6 +269,36 @@
         }
 
         try {
+            setStatus('Loading history...');
+
+            const lookupResponse = await fetch(LIST_ENDPOINT + '?badgeNumber=' + encodeURIComponent(badgeNumber), {
+                credentials: 'include'
+            });
+            const lookupData = await lookupResponse.json();
+            if (!lookupResponse.ok) {
+                throw new Error(lookupData && lookupData.error ? lookupData.error : 'Failed to load officer history');
+            }
+
+            const history = Array.isArray(lookupData.history) ? lookupData.history : [];
+
+            for (let index = 0; index < history.length; index++) {
+                const item = history[index];
+                if (!item || !item.id) continue;
+
+                setStatus('Removing history ' + (index + 1) + ' of ' + history.length + '...');
+                const removeResponse = await fetch(DELETE_ENDPOINT, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ incidentId: item.id })
+                });
+
+                const removeData = await removeResponse.json();
+                if (!removeResponse.ok) {
+                    throw new Error(removeData && removeData.error ? removeData.error : 'Failed to remove incident');
+                }
+            }
+
             setStatus('Deleting officer...');
             const response = await fetch(DELETE_OFFICER_ENDPOINT, {
                 method: 'POST',
