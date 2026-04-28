@@ -95,6 +95,19 @@ module.exports = async function handler(req, res) {
         const badgeNumber = normalizeBadge(incident.badge_number);
         const activeBadge = badgeNumber;
         const history = await getIncidentHistory(incident.officer_id || null, activeBadge);
+
+        if (!history.length) {
+            if (incident.officer_id) {
+                await supabaseRequest('/rest/v1/discipline_officers?id=eq.' + encodeURIComponent(String(incident.officer_id)), {
+                    method: 'DELETE'
+                });
+            } else if (activeBadge) {
+                await supabaseRequest('/rest/v1/discipline_officers?badge_number=eq.' + encodeURIComponent(activeBadge), {
+                    method: 'DELETE'
+                });
+            }
+        }
+
         const { incidents, officers } = await getAllOfficers();
         const roster = groupOfficerRows(officers, incidents);
         const panelResult = await syncDiscordPanel(roster);

@@ -248,7 +248,7 @@ function groupOfficerRows(officers, incidents) {
             activeHistoryCount: activeWarnings.length + activeStrikes.length,
             profileSummary: `${row.displayName} - ${activeWarnings.length} warning(s), ${activeStrikes.length} strike(s)`
         };
-    });
+    }).filter((row) => row.historyCount > 0);
 
     rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
 

@@ -268,7 +268,25 @@
             return;
         }
 
+        let previousRoster = [];
+        let previousSelectedOfficerId = '';
+
         try {
+            // Optimistic UI update so the officer disappears immediately.
+            previousRoster = roster.slice();
+            previousSelectedOfficerId = selectedOfficerId;
+
+            roster = roster.filter(function (row) {
+                return String(row.officerId) !== String(officerId);
+            });
+            if (String(selectedOfficerId) === String(officerId)) {
+                selectedOfficerId = '';
+            }
+
+            renderRoster();
+            renderStats(getSelectedOfficer());
+            renderHistory(getSelectedOfficer(), []);
+
             setStatus('Loading history...');
 
             const lookupResponse = await fetch(LIST_ENDPOINT + '?badgeNumber=' + encodeURIComponent(badgeNumber), {
@@ -316,6 +334,16 @@
             selectedOfficerId = '';
             await loadData('');
         } catch (error) {
+            // Roll back optimistic UI on failure.
+            try {
+                roster = previousRoster;
+                selectedOfficerId = previousSelectedOfficerId;
+                const activeOfficer = getSelectedOfficer();
+                renderRoster();
+                renderStats(activeOfficer);
+            } catch {
+                // ignore rollback rendering errors
+            }
             setStatus(error.message, true);
         }
     }
