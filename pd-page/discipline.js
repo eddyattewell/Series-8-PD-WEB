@@ -3,6 +3,7 @@
 
     const LIST_ENDPOINT = '/api/discipline/list';
     const SUBMIT_ENDPOINT = '/api/discipline/submit';
+    const DELETE_ENDPOINT = '/api/discipline/delete';
 
     const officerListEl = document.getElementById('officerList');
     const detailGridEl = document.getElementById('detailGrid');
@@ -91,13 +92,47 @@
                 '      <span class="badge">' + activeLabel + '</span>',
                 item.expired ? '      <span class="badge flagged">Expired</span>' : '',
                 '    </div>',
-                '    <div class="muted">' + fmtDate(item.createdAt) + '</div>',
+                '    <div class="muted" style="display:flex;gap:12px;align-items:center;">',
+                '      <span>' + fmtDate(item.createdAt) + '</span>',
+                '      <button type="button" class="mini-delete-btn" data-incident-id="' + escapeHtml(item.id) + '" data-officer-id="' + escapeHtml(officer.officerId) + '">Remove</button>',
+                '    </div>',
                 '  </div>',
                 '  <div><strong>Reason:</strong> ' + escapeHtml(item.reason || 'No reason supplied') + '</div>',
                 '  <div class="muted">Expires: ' + fmtDate(item.expiresAt) + ' (' + escapeHtml(fmtRemaining(item.expiresAt)) + ')</div>',
                 '</div>'
             ].join('');
         }).join('');
+
+        historyListEl.querySelectorAll('.mini-delete-btn').forEach(function (button) {
+            button.addEventListener('click', async function () {
+                const incidentId = button.getAttribute('data-incident-id') || '';
+                const officerId = button.getAttribute('data-officer-id') || '';
+
+                if (!incidentId) return;
+                if (!window.confirm('Remove this warning/strike permanently?')) return;
+
+                try {
+                    setStatus('Removing incident...');
+                    const response = await fetch(DELETE_ENDPOINT, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ incidentId: incidentId })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data && data.error ? data.error : 'Failed to remove incident');
+                    }
+
+                    selectedOfficerId = officerId || selectedOfficerId;
+                    await loadData(selectedOfficerId);
+                    setStatus('Removed.');
+                } catch (error) {
+                    setStatus(error.message, true);
+                }
+            });
+        });
     }
 
     function renderRoster() {
