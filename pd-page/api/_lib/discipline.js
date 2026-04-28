@@ -388,27 +388,42 @@ async function flagOfficerIfNeeded(officerId, badgeNumber) {
 }
 
 function buildDiscordPanelPayload(roster) {
-    const lines = roster.length
-        ? roster.slice(0, 25).map((officer) => {
-            const parts = [
-                '**' + officer.displayName + '**',
-                officer.badgeNumber ? 'Badge ' + officer.badgeNumber : 'Badge N/A',
-                officer.activeWarningsCount + ' warning(s)',
-                officer.activeStrikesCount + ' strike(s)'
-            ];
+    // Build a prettier embed: top-level summary and individual officer fields (max 25 fields)
+    const visible = Array.isArray(roster) ? roster.slice(0, 24) : [];
 
-            if (officer.flagged) parts.push('FLAGGED');
-            return parts.join(' • ');
-        }).join('\n')
+    const totalOfficers = visible.length;
+    const totalWarnings = visible.reduce((s, o) => s + (o.activeWarningsCount || 0), 0);
+    const totalStrikes = visible.reduce((s, o) => s + (o.activeStrikesCount || 0), 0);
+
+    const description = totalOfficers
+        ? `Active officers: **${totalOfficers}** • Warnings: **${totalWarnings}** • Strikes: **${totalStrikes}**\n\n` +
+          'Warnings expire after 14 days unless refreshed by a new incident.'
         : 'No officers have active warnings or strikes.';
+
+    const fields = visible.map((officer) => {
+        const name = `${officer.displayName || 'Unknown'} • ${officer.badgeNumber ? 'Badge ' + officer.badgeNumber : 'Badge N/A'}`;
+        const counts = `${officer.activeWarningsCount || 0} ${officer.activeWarningsCount === 1 ? 'warning' : 'warnings'} • ${officer.activeStrikesCount || 0} ${officer.activeStrikesCount === 1 ? 'strike' : 'strikes'}`;
+        const flagged = officer.flagged ? ' • ⚠️ FLAGGED' : '';
+        const history = officer.historyCount != null ? ` (${officer.historyCount} total)` : '';
+
+        // show a short top-line and then the profile summary on the next line
+        const value = `**${counts}**${flagged}${history}\n${officer.profileSummary || ''}`;
+
+        return {
+            name: name.slice(0, 256), // Discord field name limit
+            value: value.slice(0, 1024), // Discord field value limit
+            inline: false
+        };
+    });
 
     return {
         embeds: [{
             title: 'Series 8 PD Discipline Panel',
-            description: lines,
-            color: 15158332,
+            description,
+            color: 0xff6b6b,
+            fields,
             footer: {
-                text: 'Warnings expire after 14 days unless refreshed by a new incident.'
+                text: 'Updated — Warnings expire after 14 days.'
             },
             timestamp: new Date().toISOString()
         }]
