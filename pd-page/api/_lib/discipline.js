@@ -422,7 +422,7 @@ async function flagOfficerIfNeeded(officerId, badgeNumber) {
 }
 
 function buildDiscordPanelPayload(roster) {
-    // Build a prettier embed: top-level summary and individual officer fields (max 25 fields)
+    // Build a cleaner embed: top-level summary and one compact field per officer (max 25 fields)
     const visible = Array.isArray(roster) ? roster.slice(0, 24) : [];
 
     const totalOfficers = visible.length;
@@ -435,13 +435,14 @@ function buildDiscordPanelPayload(roster) {
         : 'No officers have active warnings or strikes.';
 
     const fields = visible.map((officer) => {
-        const name = `${officer.displayName || 'Unknown'} • ${officer.badgeNumber ? 'Badge ' + officer.badgeNumber : 'Badge N/A'}`;
-        const counts = `${officer.activeWarningsCount || 0} ${officer.activeWarningsCount === 1 ? 'warning' : 'warnings'} • ${officer.activeStrikesCount || 0} ${officer.activeStrikesCount === 1 ? 'strike' : 'strikes'}`;
-        const flagged = officer.flagged ? ' • ⚠️ FLAGGED' : '';
-        const history = officer.historyCount != null ? ` (${officer.historyCount} total)` : '';
+        const badge = officer.badgeNumber ? officer.badgeNumber : 'N/A';
+        const warnings = officer.activeWarningsCount || 0;
+        const strikes = officer.activeStrikesCount || 0;
+        const name = `${officer.displayName || 'Unknown'} - Badge ${badge}`;
+        const counts = `${warnings} ${warnings === 1 ? 'warning' : 'warnings'} • ${strikes} ${strikes === 1 ? 'strike' : 'strikes'}`;
+        const flagLine = officer.flagged || strikes >= 3 ? '\n🟥 FLAGGED' : '';
 
-        // show a short top-line and then the profile summary on the next line
-        const value = `**${counts}**${flagged}${history}\n${officer.profileSummary || ''}`;
+        const value = counts + flagLine;
 
         return {
             name: name.slice(0, 256), // Discord field name limit
@@ -454,7 +455,7 @@ function buildDiscordPanelPayload(roster) {
         embeds: [{
             title: 'Series 8 PD Discipline Panel',
             description,
-            color: 0xff6b6b,
+            color: visible.some((officer) => officer.flagged || (officer.activeStrikesCount || 0) >= 3) ? 0xe74c3c : 0xff6b6b,
             fields,
             footer: {
                 text: 'Updated — Warnings expire after 14 days.'
