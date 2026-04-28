@@ -7,21 +7,24 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        // Parse body - handle both pre-parsed and raw
-        let body = req.body;
-        if (typeof body === 'string') {
-            body = JSON.parse(body);
-        }
+        console.log('Raw body:', req.body);
+        console.log('Body type:', typeof req.body);
+        console.log('Body keys:', Object.keys(req.body || {}));
 
-        const pagePath = body?.pagePath;
-        const content = body?.content;
+        const pagePath = req.body?.pagePath || req.body?.page_path;
+        const content = req.body?.content;
 
-        console.log('Save request:', { pagePath: pagePath?.substring(0, 50), contentLength: content?.length });
+        console.log('Extracted - pagePath:', pagePath ? 'YES' : 'NO', 'content:', content ? `${content.length} chars` : 'NO');
 
         if (!pagePath || !content) {
             return res.status(400).json({
                 error: 'pagePath and content are required',
-                received: { pagePath: !!pagePath, content: !!content }
+                debug: {
+                    bodyReceived: !!req.body,
+                    bodyType: typeof req.body,
+                    hasPagePath: !!pagePath,
+                    hasContent: !!content
+                }
             });
         }
 
@@ -48,3 +51,4 @@ module.exports = async function handler(req, res) {
         });
     }
 };
+
