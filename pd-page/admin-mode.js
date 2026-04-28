@@ -304,10 +304,8 @@
 
         // Reconstruct the full HTML with edited content
         const editedContent = wrapper.innerHTML;
-        const controls = document.getElementById('pdEditControls');
-        const toolbar = document.getElementById('pdEditorToolbar');
 
-        // Build new HTML (keeping head and structure)
+        // Build new HTML
         let newHTML = document.documentElement.outerHTML;
 
         // Replace the content in the new HTML
@@ -316,7 +314,7 @@
             '<div id="pdEditableContent">' + editedContent + '</div>'
         );
 
-        // Send to save endpoint
+        // Try to save via API first
         fetch('/api/page/save', {
             method: 'POST',
             credentials: 'include',
@@ -329,31 +327,62 @@
         .then(res => res.json())
         .then(data => {
             if (data.ok) {
-                console.log('Page saved successfully');
-                // Show a brief notification
-                const status = document.createElement('div');
-                status.textContent = '✓ Changes saved!';
-                status.style.cssText = `
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    background: #4caf50;
-                    color: white;
-                    padding: 12px 20px;
-                    border-radius: 4px;
-                    font-size: 14px;
-                    z-index: 99999;
-                `;
-                document.body.appendChild(status);
-                setTimeout(() => status.remove(), 2000);
+                showNotification('✓ Changes saved!', 'success');
             } else {
-                alert('Error saving page: ' + (data.error || 'Unknown error'));
+                // If API save fails, try clipboard fallback
+                showSaveOptions(newHTML);
             }
         })
         .catch(err => {
             console.error('Save error:', err);
-            alert('Failed to save page. Check console for details.');
+            // API failed - show fallback options
+            showSaveOptions(newHTML);
         });
+    }
+
+    function showSaveOptions(htmlContent) {
+        // Try to copy to clipboard
+        try {
+            navigator.clipboard.writeText(htmlContent);
+            showNotification('✓ HTML copied to clipboard! Paste it into your file.', 'info');
+        } catch (err) {
+            console.error('Clipboard error:', err);
+            // If clipboard fails, show download option
+            downloadHTML(htmlContent);
+        }
+    }
+
+    function downloadHTML(htmlContent) {
+        const pageName = window.location.pathname.split('/').pop() || 'page.html';
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = pageName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        showNotification('✓ File downloaded! Replace your original file with it.', 'info');
+    }
+
+    function showNotification(message, type) {
+        const status = document.createElement('div');
+        status.textContent = message;
+        status.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#4caf50' : '#2196f3'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 99999;
+            max-width: 400px;
+        `;
+        document.body.appendChild(status);
+        setTimeout(() => status.remove(), 4000);
     }
 
     function setWarningStrikeAccess(allowed) {
