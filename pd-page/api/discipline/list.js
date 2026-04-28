@@ -2,7 +2,8 @@ const {
     getAllOfficers,
     groupOfficerRows,
     getIncidentHistory,
-    refreshExpiredIncidents
+    refreshExpiredIncidents,
+    syncDiscordPanel
 } = require('../_lib/discipline');
 
 module.exports = async function handler(req, res) {
@@ -18,6 +19,14 @@ module.exports = async function handler(req, res) {
 
         const { incidents, officers } = await getAllOfficers();
         const roster = groupOfficerRows(officers, incidents);
+
+        // Keep Discord panel in near real-time with the same state the UI is reading.
+        let panelResult = null;
+        try {
+            panelResult = await syncDiscordPanel(roster);
+        } catch {
+            // Do not fail roster loading if Discord update fails.
+        }
 
         let selectedOfficer = null;
         if (officerId) {
@@ -35,7 +44,8 @@ module.exports = async function handler(req, res) {
         res.status(200).json({
             roster,
             selectedOfficer,
-            history
+            history,
+            panelResult
         });
     } catch (error) {
         res.status(500).json({
