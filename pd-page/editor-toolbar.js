@@ -185,6 +185,7 @@
     function showToolbar() {
         const toolbar = createToolbar();
         toolbar.style.display = 'flex';
+        enhanceImageEditing(); // Re-enhance images when entering edit mode
         try {
             localStorage.setItem(TOOLBAR_VISIBLE_KEY, '1');
         } catch { }
@@ -211,12 +212,90 @@
             if (img.dataset.adminControl === '1') return;
 
             img.style.maxWidth = '100%';
-            img.style.cursor = 'move';
+            img.style.cursor = 'grab';
 
+            // Make image selectable
+            img.addEventListener('click', (e) => {
+                if (document.body.contentEditable !== 'true') return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Select the image
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(img);
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Add visual indicator
+                img.style.outline = '2px solid #e53935';
+                img.style.outlineOffset = '2px';
+            });
+
+            // Make draggable
+            img.draggable = true;
             img.addEventListener('dragstart', (e) => {
                 if (document.body.contentEditable !== 'true') return;
                 e.dataTransfer.effectAllowed = 'move';
+                img.style.opacity = '0.5';
             });
+
+            img.addEventListener('dragend', (e) => {
+                img.style.opacity = '1';
+            });
+        });
+
+        // Allow drop on the page
+        document.addEventListener('dragover', (e) => {
+            if (document.body.contentEditable !== 'true') return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        // Make body properly editable - handle clicks in empty areas
+        const body = document.body;
+        body.addEventListener('click', (e) => {
+            if (document.body.contentEditable !== 'true') return;
+
+            // Click on image - already handled by img click handler
+            if (e.target.tagName === 'IMG') return;
+
+            // Click on edit controls - don't interfere
+            if (e.target.getAttribute('data-admin-control') === '1') return;
+
+            // Remove image outlines when clicking elsewhere
+            document.querySelectorAll('img').forEach(img => {
+                if (img !== e.target) img.style.outline = 'none';
+            });
+
+            // If we're in edit mode, ensure focus and position cursor
+            body.focus();
+            if (window.getSelection().rangeCount === 0) {
+                const range = document.createRange();
+                range.setStart(body, body.childNodes.length);
+                range.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
+
+        // Allow deletion of selected images with Delete or Backspace
+        document.addEventListener('keydown', (e) => {
+            if (document.body.contentEditable !== 'true') return;
+            if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+
+            const range = selection.getRangeAt(0);
+            const container = range.commonAncestorContainer;
+            const img = container.nodeType === 3 ? container.parentElement : container;
+
+            if (img.tagName === 'IMG') {
+                e.preventDefault();
+                img.remove();
+            }
         });
     }
 
