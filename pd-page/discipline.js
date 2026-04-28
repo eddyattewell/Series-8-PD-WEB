@@ -5,6 +5,8 @@
     const SUBMIT_ENDPOINT = '/api/discipline/submit';
     const DELETE_ENDPOINT = '/api/discipline/delete';
 
+    const officerPanelEl = document.getElementById('officerPanel');
+    const officerToggleBtn = document.getElementById('officerToggleBtn');
     const officerListEl = document.getElementById('officerList');
     const detailGridEl = document.getElementById('detailGrid');
     const historyListEl = document.getElementById('historyList');
@@ -44,14 +46,30 @@
         statusEl.style.color = isError ? '#ff8a80' : '#bdbdbd';
     }
 
+    function setOfficerListOpen(isOpen) {
+        if (officerPanelEl) {
+            officerPanelEl.classList.toggle('open', !!isOpen);
+        }
+        if (officerToggleBtn) {
+            officerToggleBtn.textContent = isOpen ? 'Hide Officers' : 'View Officers';
+        }
+    }
+
     function getSelectedOfficer() {
-        return roster.find(function (row) { return String(row.officerId) === String(selectedOfficerId); }) || roster[0] || null;
+        if (!selectedOfficerId) return null;
+        return roster.find(function (row) { return String(row.officerId) === String(selectedOfficerId); }) || null;
     }
 
     function renderStats(officer) {
         if (!detailGridEl) return;
         if (!officer) {
-            detailGridEl.innerHTML = '<div class="stat"><span>No officer selected</span><strong>0</strong></div>';
+            detailGridEl.innerHTML = '<div class="stat"><span>Officer</span><strong>Select an officer</strong></div>' +
+                '<div class="stat"><span>Badge</span><strong>N/A</strong></div>' +
+                '<div class="stat"><span>Warnings</span><strong>0</strong></div>' +
+                '<div class="stat"><span>Strikes</span><strong>0</strong></div>' +
+                '<div class="stat"><span>Flagged</span><strong>No</strong></div>' +
+                '<div class="stat"><span>Total History</span><strong>0</strong></div>' +
+                '<div class="stat"><span>Status</span><strong>Waiting</strong></div>';
             return;
         }
 
@@ -71,7 +89,7 @@
     function renderHistory(officer, history) {
         if (!historyListEl) return;
         if (!officer) {
-            historyListEl.innerHTML = '<div class="history-item">No officer selected.</div>';
+            historyListEl.innerHTML = '<div class="history-item">Select an officer to view history.</div>';
             return;
         }
 
@@ -180,8 +198,8 @@
             const selected = data.selectedOfficer || null;
             if (selected) {
                 selectedOfficerId = String(selected.officerId);
-            } else if (!selectedOfficerId && roster[0]) {
-                selectedOfficerId = String(roster[0].officerId);
+            } else if (!selectedOfficerId) {
+                selectedOfficerId = '';
             }
 
             const activeOfficer = getSelectedOfficer();
@@ -195,6 +213,13 @@
                 officerListEl.innerHTML = '<div class="officer-card">' + escapeHtml(error.message) + '</div>';
             }
         }
+    }
+
+    if (officerToggleBtn) {
+        officerToggleBtn.addEventListener('click', function () {
+            const isOpen = officerPanelEl ? officerPanelEl.classList.contains('open') : false;
+            setOfficerListOpen(!isOpen);
+        });
     }
 
     if (formEl) {
@@ -234,4 +259,5 @@
     }
 
     loadData('');
+    setOfficerListOpen(false);
 })();

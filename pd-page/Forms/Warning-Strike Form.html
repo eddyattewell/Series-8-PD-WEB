@@ -98,8 +98,33 @@
             border-radius: 12px;
             padding: 16px;
         }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
         .panel h2, .panel h3 {
             margin-top: 0;
+        }
+        .toggle-btn {
+            border: 1px solid #3a3a3a;
+            background: linear-gradient(180deg, #242424, #171717);
+            color: #fff;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .toggle-btn:hover {
+            border-color: #e53935;
+            color: #ffefef;
+        }
+        .officer-panel .officer-list {
+            display: none;
+        }
+        .officer-panel.open .officer-list {
+            display: flex;
         }
         .officer-list {
             display: flex;
@@ -290,7 +315,7 @@
                 </div>
             </div>
             <div class="dropdown">
-                <button class="dropbtn" onclick="window.open('https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d', '_blank')">Roster</button>
+                <a class="dropbtn" href="https://fiveroster.com/roster/08cdc55e-113f-4faa-a351-1963c5eebb3d" target="_blank" rel="noopener noreferrer">Roster</a>
                 <button class="dropbtn" onclick="toggleAdminMode()" id="adminModeBtn">Edit Mode</button>
             </div>
         </div>
@@ -300,8 +325,11 @@
         <p class="muted">Search every officer on the left, then open a profile to see their full warning and strike history. Active warnings expire after 14 days, 3 warnings convert into 1 strike, and 3 strikes flag the officer.</p>
 
         <div class="mdt-shell">
-            <section class="panel">
-                <h2>Officers</h2>
+            <section class="panel officer-panel" id="officerPanel">
+                <div class="panel-header">
+                    <h2>Officers</h2>
+                    <button type="button" class="toggle-btn" id="officerToggleBtn">View Officers</button>
+                </div>
                 <p class="muted">Live roster with active warning and strike totals.</p>
                 <div class="officer-list" id="officerList"></div>
             </section>
