@@ -54,6 +54,10 @@ module.exports = async function handler(req, res) {
         const officerId = officer.id;
 
         // Delete all incidents for this officer
+        await supabaseRequest('/rest/v1/discipline_incidents?badge_number=ilike.' + encodeURIComponent(badgeNumber), {
+            method: 'DELETE'
+        });
+
         await supabaseRequest('/rest/v1/discipline_incidents?officer_id=eq.' + encodeURIComponent(String(officerId)), {
             method: 'DELETE'
         });

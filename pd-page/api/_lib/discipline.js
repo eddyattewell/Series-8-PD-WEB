@@ -306,17 +306,21 @@ async function getOfficerByBadge(badgeNumber) {
 }
 
 async function getIncidentHistory(officerId, badgeNumber) {
-    const queryParts = [];
-    // Only include officer_id if it looks like a numeric DB id. Some callers pass badge numbers
-    // in officerId (non-numeric) so querying by officer_id would fail to return rows.
-    if (officerId && /^\d+$/.test(String(officerId))) {
-        queryParts.push('officer_id=eq.' + encodeURIComponent(String(officerId)));
-    }
-    if (badgeNumber) queryParts.push('badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)));
+    const normalizedBadge = badgeNumber ? normalizeBadge(badgeNumber) : '';
 
-    const query = queryParts.length ? '?' + queryParts.join('&') + '&order=created_at.desc' : '?order=created_at.desc';
-    const rows = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + query);
-    return (Array.isArray(rows) ? rows : []).map(normalizeIncidentRow).filter(Boolean);
+    if (normalizedBadge) {
+        const rowsByBadge = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?badge_number=ilike.' + encodeURIComponent(normalizedBadge) + '&order=created_at.desc');
+        if (Array.isArray(rowsByBadge) && rowsByBadge.length) {
+            return rowsByBadge.map(normalizeIncidentRow).filter(Boolean);
+        }
+    }
+
+    if (officerId && /^\d+$/.test(String(officerId))) {
+        const rowsByOfficer = await supabaseRequest('/rest/v1/' + TABLE_INCIDENTS + '?officer_id=eq.' + encodeURIComponent(String(officerId)) + '&order=created_at.desc');
+        return (Array.isArray(rowsByOfficer) ? rowsByOfficer : []).map(normalizeIncidentRow).filter(Boolean);
+    }
+
+    return [];
 }
 
 async function createIncident({ officerName, badgeNumber, reason, type, createdBy }) {
