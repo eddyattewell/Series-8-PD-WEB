@@ -172,6 +172,13 @@
         document.body.spellcheck = next;
         document.body.dataset.adminMode = next ? '1' : '0';
 
+        // Show/hide editor toolbar
+        if (next && window.pdEditorToolbar) {
+            window.pdEditorToolbar.show();
+        } else if (window.pdEditorToolbar) {
+            window.pdEditorToolbar.hide();
+        }
+
         try {
             localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
         } catch {
