@@ -277,7 +277,11 @@ async function getOfficerByBadge(badgeNumber) {
 
 async function getIncidentHistory(officerId, badgeNumber) {
     const queryParts = [];
-    if (officerId) queryParts.push('officer_id=eq.' + encodeURIComponent(String(officerId)));
+    // Only include officer_id if it looks like a numeric DB id. Some callers pass badge numbers
+    // in officerId (non-numeric) so querying by officer_id would fail to return rows.
+    if (officerId && /^\d+$/.test(String(officerId))) {
+        queryParts.push('officer_id=eq.' + encodeURIComponent(String(officerId)));
+    }
     if (badgeNumber) queryParts.push('badge_number=eq.' + encodeURIComponent(normalizeBadge(badgeNumber)));
 
     const query = queryParts.length ? '?' + queryParts.join('&') + '&order=created_at.desc' : '?order=created_at.desc';
