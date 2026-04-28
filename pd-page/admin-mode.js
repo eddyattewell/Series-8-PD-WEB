@@ -240,6 +240,38 @@
             img.dataset.isDragging = 'false';
         });
 
+        // Make wrapper clickable - click anywhere to edit
+        wrapper.addEventListener('click', (e) => {
+            // Allow clicking on images for dragging
+            if (e.target.tagName === 'IMG') return;
+
+            wrapper.focus();
+
+            // Try to set cursor at click position
+            if (document.caretRangeFromPoint) {
+                const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                if (range) {
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    return;
+                }
+            }
+
+            // Fallback: add text to empty wrapper
+            if (wrapper.childNodes.length === 0 || !wrapper.innerText.trim()) {
+                const p = document.createElement('p');
+                p.innerHTML = '&nbsp;';
+                wrapper.appendChild(p);
+                const range = document.createRange();
+                range.setStart(p, 0);
+                range.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
+
         // Mouse down on image - start drag
         wrapper.addEventListener('mousedown', (e) => {
             if (e.target.tagName !== 'IMG') return;
@@ -281,17 +313,72 @@
             document.addEventListener('mouseup', onMouseUp);
         });
 
-        // Click anywhere else to place text cursor
-        wrapper.addEventListener('click', (e) => {
-            if (e.target === wrapper || e.target.tagName === 'BR') {
-                wrapper.focus();
-                const range = document.createRange();
-                range.setStart(wrapper, 0);
-                range.collapse(true);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
+        // Allow pasting images
+        wrapper.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    const blob = items[i].getAsFile();
+                    const url = URL.createObjectURL(blob);
+
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.maxWidth = '300px';
+                    img.style.marginBottom = '10px';
+                    img.style.display = 'block';
+
+                    wrapper.focus();
+                    const range = document.getSelection().getRangeAt(0);
+                    range.insertNode(img);
+
+                    // Make it draggable immediately
+                    enableImageDragging(img);
+                    break;
+                }
             }
+        });
+    }
+
+    function enableImageDragging(img) {
+        const wrapper = document.getElementById('pdEditableContent');
+        if (!wrapper) return;
+
+        img.style.cursor = 'grab';
+        img.dataset.isDragging = 'false';
+
+        img.addEventListener('mousedown', (e) => {
+            if (e.target.tagName !== 'IMG') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            img.style.cursor = 'grabbing';
+            img.dataset.isDragging = 'true';
+            img.style.outline = '2px solid #e53935';
+            img.style.outlineOffset = '2px';
+            img.style.position = 'absolute';
+            img.style.zIndex = '1000';
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startLeft = img.offsetLeft;
+            const startTop = img.offsetTop;
+
+            function onMouseMove(moveEvent) {
+                img.style.left = (startLeft + moveEvent.clientX - startX) + 'px';
+                img.style.top = (startTop + moveEvent.clientY - startY) + 'px';
+            }
+
+            function onMouseUp() {
+                img.style.cursor = 'grab';
+                img.dataset.isDragging = 'false';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
         });
     }
 
@@ -314,56 +401,28 @@
             '<div id="pdEditableContent">' + editedContent + '</div>'
         );
 
-        // Try to save via API first
-        fetch('/api/page/save', {
+        // Save to database
+        fetch('/api/page/save-content', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                filePath: pagePath,
+                pagePath: pagePath,
                 content: newHTML
             })
         })
         .then(res => res.json())
         .then(data => {
             if (data.ok) {
-                showNotification('✓ Changes saved!', 'success');
+                showNotification('✓ Changes saved to website!', 'success');
             } else {
-                // If API save fails, try clipboard fallback
-                showSaveOptions(newHTML);
+                showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
             }
         })
         .catch(err => {
             console.error('Save error:', err);
-            // API failed - show fallback options
-            showSaveOptions(newHTML);
+            showNotification('Failed to save. Check console.', 'error');
         });
-    }
-
-    function showSaveOptions(htmlContent) {
-        // Try to copy to clipboard
-        try {
-            navigator.clipboard.writeText(htmlContent);
-            showNotification('✓ HTML copied to clipboard! Paste it into your file.', 'info');
-        } catch (err) {
-            console.error('Clipboard error:', err);
-            // If clipboard fails, show download option
-            downloadHTML(htmlContent);
-        }
-    }
-
-    function downloadHTML(htmlContent) {
-        const pageName = window.location.pathname.split('/').pop() || 'page.html';
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = pageName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        showNotification('✓ File downloaded! Replace your original file with it.', 'info');
     }
 
     function showNotification(message, type) {
@@ -459,6 +518,9 @@
 
         observer.observe(document.body, { childList: true });
 
+        // Load saved page content if it exists
+        loadSavedContent();
+
         loadRoles().then(function (roles) {
             canUseEditMode = hasRequiredRole(roles);
             setWarningStrikeAccess(canUseEditMode);
@@ -473,6 +535,24 @@
             setAdminMode(canUseEditMode && startOn);
             updateControls();
         });
+    }
+
+    function loadSavedContent() {
+        const pagePath = window.location.pathname.replace(/^\//, '');
+
+        fetch('/api/page/load-content?path=' + encodeURIComponent(pagePath))
+            .then(res => res.json())
+            .then(data => {
+                if (data.found && data.content) {
+                    // Replace the entire document with saved content
+                    document.open();
+                    document.write(data.content);
+                    document.close();
+                }
+            })
+            .catch(err => {
+                console.log('No saved content found, using default page');
+            });
     }
 
     if (document.readyState === 'loading') {
